@@ -1,0 +1,1 @@
+﻿components/StudentClient.tsx(40,26): error TS2339: Property 'catch' does not exist on type 'PromiseLike<void>'.

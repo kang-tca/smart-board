@@ -1,0 +1,5 @@
+{
+  "name": "Smart Board",
+  "description": "An educational web application that allows users to upload PDF files, arrange them freely on a canvas, and annotate them with pens, highlighters, and shapes.",
+  "requestFramePermissions": []
+}
