@@ -783,7 +783,7 @@ const App: React.FC = () => {
                     const page = await pdf.getPage(i);
                     const viewport = page.getViewport({ scale: 1.5 });
                     const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
+                    const context = canvas.getContext('2d', { willReadFrequently: true });
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
 

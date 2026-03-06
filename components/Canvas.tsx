@@ -5,53 +5,53 @@ import { CanvasItem, Tool, ToolOptions, PathItem, ShapeItem, Transform, TextItem
 import { Icon } from './Icon';
 
 interface CanvasProps {
-  items: CanvasItem[];
-  setItems: React.Dispatch<React.SetStateAction<CanvasItem[]>>;
-  selectedTool: Tool;
-  toolOptions: ToolOptions;
-  transform: Transform;
-  setTransform: React.Dispatch<React.SetStateAction<Transform>>;
-  selectedItemIds: string[];
-  setSelectedItemIds: React.Dispatch<React.SetStateAction<string[]>>;
-  undo: () => void;
-  redo: () => void;
-  backgroundColor: string;
-  setBackgroundColor: (color: string) => void;
-  backgroundColors: { name: string; color: string; }[];
-  onEnterPresentation: (item: ImageItem) => void;
-  isPresentationMode: boolean;
-  presentationFitTransform: Transform | null;
-  gridOpacity: number;
-  setGridOpacity: (val: number) => void;
+    items: CanvasItem[];
+    setItems: React.Dispatch<React.SetStateAction<CanvasItem[]>>;
+    selectedTool: Tool;
+    toolOptions: ToolOptions;
+    transform: Transform;
+    setTransform: React.Dispatch<React.SetStateAction<Transform>>;
+    selectedItemIds: string[];
+    setSelectedItemIds: React.Dispatch<React.SetStateAction<string[]>>;
+    undo: () => void;
+    redo: () => void;
+    backgroundColor: string;
+    setBackgroundColor: (color: string) => void;
+    backgroundColors: { name: string; color: string; }[];
+    onEnterPresentation: (item: ImageItem) => void;
+    isPresentationMode: boolean;
+    presentationFitTransform: Transform | null;
+    gridOpacity: number;
+    setGridOpacity: (val: number) => void;
 }
 
 const TAG_ICON_SIZE = 32; // in world units
 
 // Helper functions for touch geometry
 const getTouchDistance = (touches: React.TouchList) => {
-  const t1 = touches[0];
-  const t2 = touches[1];
-  return Math.sqrt(Math.pow(t2.clientX - t1.clientX, 2) + Math.pow(t2.clientY - t1.clientY, 2));
+    const t1 = touches[0];
+    const t2 = touches[1];
+    return Math.sqrt(Math.pow(t2.clientX - t1.clientX, 2) + Math.pow(t2.clientY - t1.clientY, 2));
 };
 
 const getTouchMidpoint = (touches: React.TouchList, rect: DOMRect) => {
-  const t1 = touches[0];
-  const t2 = touches[1];
-  return {
-    x: (t1.clientX + t2.clientX) / 2 - rect.left,
-    y: (t1.clientY + t2.clientY) / 2 - rect.top
-  };
+    const t1 = touches[0];
+    const t2 = touches[1];
+    return {
+        x: (t1.clientX + t2.clientX) / 2 - rect.left,
+        y: (t1.clientY + t2.clientY) / 2 - rect.top
+    };
 };
 
 // 안전한 ID 생성 함수 (uuid 라이브러리 대체)
 const generateId = () => {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 };
 
 // Helper to check if a color is dark (to set grid color)
@@ -59,8 +59,8 @@ const isDarkColor = (hex: string): boolean => {
     const c = hex.substring(1); // strip #
     const rgb = parseInt(c, 16);   // convert rrggbb to decimal
     const r = (rgb >> 16) & 0xff;  // extract red
-    const g = (rgb >>  8) & 0xff;  // extract green
-    const b = (rgb >>  0) & 0xff;  // extract blue
+    const g = (rgb >> 8) & 0xff;  // extract green
+    const b = (rgb >> 0) & 0xff;  // extract blue
     const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b; // per ITU-R BT.709
     return luma < 128;
 };
@@ -96,17 +96,17 @@ const measureMultilineText = (
 
 
 // Helper for eraser intersection check
-const lineSegmentIntersectsAABB = (p1: {x: number, y: number}, p2: {x: number, y: number}, bb: {x: number, y: number, width: number, height: number}) => {
-    const orientation = (p: {x: number, y: number}, q: {x: number, y: number}, r: {x: number, y: number}) => {
+const lineSegmentIntersectsAABB = (p1: { x: number, y: number }, p2: { x: number, y: number }, bb: { x: number, y: number, width: number, height: number }) => {
+    const orientation = (p: { x: number, y: number }, q: { x: number, y: number }, r: { x: number, y: number }) => {
         const val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
         if (val === 0) return 0; // Collinear
         return (val > 0) ? 1 : 2; // Clockwise or Counterclockwise
     };
-    const onSegment = (p: {x: number, y: number}, q: {x: number, y: number}, r: {x: number, y: number}) => {
+    const onSegment = (p: { x: number, y: number }, q: { x: number, y: number }, r: { x: number, y: number }) => {
         return (q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
-                q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y));
+            q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y));
     };
-    const segmentsIntersect = (p1: {x: number, y: number}, q1: {x: number, y: number}, p2: {x: number, y: number}, q2: {x: number, y: number}) => {
+    const segmentsIntersect = (p1: { x: number, y: number }, q1: { x: number, y: number }, p2: { x: number, y: number }, q2: { x: number, y: number }) => {
         const o1 = orientation(p1, q1, p2);
         const o2 = orientation(p1, q1, q2);
         const o3 = orientation(p2, q2, p1);
@@ -121,10 +121,10 @@ const lineSegmentIntersectsAABB = (p1: {x: number, y: number}, p2: {x: number, y
     if (p1.x >= bb.x && p1.x <= bb.x + bb.width && p1.y >= bb.y && p1.y <= bb.y + bb.height) return true;
     if (p2.x >= bb.x && p2.x <= bb.x + bb.width && p2.y >= bb.y && p2.y <= bb.y + bb.height) return true;
     const lines = [
-        [{x: bb.x, y: bb.y}, {x: bb.x + bb.width, y: bb.y}],
-        [{x: bb.x, y: bb.y + bb.height}, {x: bb.x + bb.width, y: bb.y + bb.height}],
-        [{x: bb.x, y: bb.y}, {x: bb.x, y: bb.y + bb.height}],
-        [{x: bb.x + bb.width, y: bb.y}, {x: bb.x + bb.width, y: bb.y + bb.height}],
+        [{ x: bb.x, y: bb.y }, { x: bb.x + bb.width, y: bb.y }],
+        [{ x: bb.x, y: bb.y + bb.height }, { x: bb.x + bb.width, y: bb.y + bb.height }],
+        [{ x: bb.x, y: bb.y }, { x: bb.x, y: bb.y + bb.height }],
+        [{ x: bb.x + bb.width, y: bb.y }, { x: bb.x + bb.width, y: bb.y + bb.height }],
     ];
     for (const line of lines) {
         if (segmentsIntersect(p1, p2, line[0], line[1])) return true;
@@ -133,1249 +133,1253 @@ const lineSegmentIntersectsAABB = (p1: {x: number, y: number}, p2: {x: number, y
 };
 
 export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, toolOptions, transform, setTransform, selectedItemIds, setSelectedItemIds, undo, redo, backgroundColor, setBackgroundColor, backgroundColors, onEnterPresentation, isPresentationMode, presentationFitTransform, gridOpacity, setGridOpacity }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const textInputRef = useRef<HTMLTextAreaElement>(null);
-  const tagIconImageRef = useRef<HTMLImageElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const textInputRef = useRef<HTMLTextAreaElement>(null);
+    const tagIconImageRef = useRef<HTMLImageElement | null>(null);
 
-  // Use a ref to keep track of the latest state variables needed in event listeners
-  // This avoids stale closures without re-binding the event listeners on every render
-  const latestStateRef = useRef({
-      transform,
-      isPresentationMode,
-      presentationFitTransform,
-      items,
-      selectedItemIds
-  });
+    // Use a ref to keep track of the latest state variables needed in event listeners
+    // This avoids stale closures without re-binding the event listeners on every render
+    const latestStateRef = useRef({
+        transform,
+        isPresentationMode,
+        presentationFitTransform,
+        items,
+        selectedItemIds
+    });
 
-  useEffect(() => {
-      latestStateRef.current = {
-          transform,
-          isPresentationMode,
-          presentationFitTransform,
-          items,
-          selectedItemIds
-      };
-  }, [transform, isPresentationMode, presentationFitTransform, items, selectedItemIds]);
+    useEffect(() => {
+        latestStateRef.current = {
+            transform,
+            isPresentationMode,
+            presentationFitTransform,
+            items,
+            selectedItemIds
+        };
+    }, [transform, isPresentationMode, presentationFitTransform, items, selectedItemIds]);
 
-  const [isDrawing, setIsDrawing] = useState(false); // Drawing, dragging, or panning
-  const [currentItem, setCurrentItem] = useState<CanvasItem | null>(null);
-  
-  const [draggedState, setDraggedState] = useState<{
-    startMousePos: { x: number; y: number };
-    currentMousePos: { x: number; y: number };
-    initialItemPositions: Map<string, { x: number; y: number }>;
-  } | null>(null);
+    const [isDrawing, setIsDrawing] = useState(false); // Drawing, dragging, or panning
+    const [currentItem, setCurrentItem] = useState<CanvasItem | null>(null);
 
-  const [resizingItem, setResizingItem] = useState<{
-    item: TextItem;
-    originalItem: TextItem;
-    handle: string;
-    startX: number;
-    startY: number;
-  } | null>(null);
-  
-  const [erasedDuringDraw, setErasedDuringDraw] = useState<Set<string>>(new Set());
-  const [marquee, setMarquee] = useState<{ x1: number, y1: number, x2: number, y2: number } | null>(null);
+    const [draggedState, setDraggedState] = useState<{
+        startMousePos: { x: number; y: number };
+        currentMousePos: { x: number; y: number };
+        initialItemPositions: Map<string, { x: number; y: number }>;
+    } | null>(null);
 
-  const [editingText, setEditingText] = useState<{ item: TextItem | null, isNew: boolean }>({ item: null, isNew: false });
-  const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
+    const [resizingItem, setResizingItem] = useState<{
+        item: TextItem;
+        originalItem: TextItem;
+        handle: string;
+        startX: number;
+        startY: number;
+    } | null>(null);
 
-  const [isPanningMode, setIsPanningMode] = useState(false);
-  const lastMousePosRef = useRef({ x: 0, y: 0 });
-  const panStartPosRef = useRef<{ x: number; y: number } | null>(null);
+    const [erasedDuringDraw, setErasedDuringDraw] = useState<Set<string>>(new Set());
+    const [marquee, setMarquee] = useState<{ x1: number, y1: number, x2: number, y2: number } | null>(null);
 
-  const [isPartialErasing, setIsPartialErasing] = useState(false);
-  const [eraserPath, setEraserPath] = useState<{x: number, y: number}[] | null>(null);
-  const eraserLastPosRef = useRef<{x: number, y: number} | null>(null);
-  
-  const [imagesLoaded, setImagesLoaded] = useState(0);
+    const [editingText, setEditingText] = useState<{ item: TextItem | null, isNew: boolean }>({ item: null, isNew: false });
+    const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
 
-  // Refs for inertia panning
-  const velocityRef = useRef({ x: 0, y: 0 });
-  const animationFrameRef = useRef<number | null>(null);
-  const lastMoveTimeRef = useRef<number | null>(null);
-  
-  // Refs for pinch-to-zoom
-  const pinchStartRef = useRef<{
-    distance: number;
-    transform: Transform;
-    midPointScreen: { x: number; y: number };
-  } | null>(null);
-  
-  // New state for Grid Slider visibility with delay
-  const [showGridSlider, setShowGridSlider] = useState(false);
-  const gridSliderTimeoutRef = useRef<number | null>(null);
+    const [isPanningMode, setIsPanningMode] = useState(false);
+    const lastMousePosRef = useRef({ x: 0, y: 0 });
+    const panStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handleGridMouseEnter = () => {
-    if (gridSliderTimeoutRef.current) {
-      clearTimeout(gridSliderTimeoutRef.current);
-      gridSliderTimeoutRef.current = null;
-    }
-    setShowGridSlider(true);
-  };
+    const [isPartialErasing, setIsPartialErasing] = useState(false);
+    const [eraserPath, setEraserPath] = useState<{ x: number, y: number }[] | null>(null);
+    const eraserLastPosRef = useRef<{ x: number, y: number } | null>(null);
 
-  const handleGridMouseLeave = () => {
-    gridSliderTimeoutRef.current = window.setTimeout(() => {
-      setShowGridSlider(false);
-    }, 300);
-  };
-  
-  const handleResetZoom = () => {
-      setTransform(prev => ({ ...prev, scale: 1 }));
-  };
+    const [imagesLoaded, setImagesLoaded] = useState(0);
 
-  const getCanvasContext = useCallback(() => canvasRef.current?.getContext('2d'), []);
+    // Refs for inertia panning
+    const velocityRef = useRef({ x: 0, y: 0 });
+    const animationFrameRef = useRef<number | null>(null);
+    const lastMoveTimeRef = useRef<number | null>(null);
 
-  const getBoundingBox = (item: CanvasItem) => {
-      if (item.type === 'path') {
-          if (item.points.length === 0) return { x: item.x, y: item.y, width: 0, height: 0 };
-          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-          item.points.forEach(p => {
-              minX = Math.min(minX, p.x);
-              minY = Math.min(minY, p.y);
-              maxX = Math.max(maxX, p.x);
-              maxY = Math.max(maxY, p.y);
-          });
-          return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-      }
-      if (item.type === 'tag') {
-        return { x: item.x - TAG_ICON_SIZE / 2, y: item.y - TAG_ICON_SIZE / 2, width: TAG_ICON_SIZE, height: TAG_ICON_SIZE };
-      }
-      return { x: item.x, y: item.y, width: item.width, height: item.height };
-  }
-  
-  const drawSelection = (ctx: CanvasRenderingContext2D, item: CanvasItem, canResize: boolean) => {
-      ctx.strokeStyle = '#3B82F6';
-      ctx.lineWidth = 2 / transform.scale;
-      ctx.setLineDash([6 / transform.scale, 4 / transform.scale]);
-      const padding = 5 / transform.scale;
-      let { x, y, width, height } = getBoundingBox(item);
-      ctx.strokeRect(x - padding, y - padding, width + padding * 2, height + padding * 2);
-      ctx.setLineDash([]);
+    // Refs for pinch-to-zoom
+    const pinchStartRef = useRef<{
+        distance: number;
+        transform: Transform;
+        midPointScreen: { x: number; y: number };
+    } | null>(null);
 
-      if (item.type === 'text' && canResize) {
-        const handleSize = 8 / transform.scale;
-        ctx.fillStyle = '#3B82F6';
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 1 / transform.scale;
-        
-        const handles = [
-            { x: x, y: y }, // top-left
-            { x: x + width, y: y }, // top-right
-            { x: x, y: y + height }, // bottom-left
-            { x: x + width, y: y + height }, // bottom-right
-        ];
+    // New state for Grid Slider visibility with delay
+    const [showGridSlider, setShowGridSlider] = useState(false);
+    const gridSliderTimeoutRef = useRef<number | null>(null);
 
-        handles.forEach(handle => {
-             ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
-             ctx.strokeRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
-        });
-      }
-  }
-
-  const drawItem = useCallback((ctx: CanvasRenderingContext2D, item: CanvasItem) => {
-    if (editingText.item && editingText.item.id === item.id) return;
-
-    switch (item.type) {
-      case 'image':
-      case 'sticker':
-        const img = imageCache.current.get(item.dataUrl);
-        if (img) {
-          ctx.drawImage(img, item.x, item.y, item.width, item.height);
-        } else {
-          const newImg = new Image();
-          newImg.src = item.dataUrl;
-          newImg.onload = () => {
-            imageCache.current.set(item.dataUrl, newImg);
-            setImagesLoaded(c => c + 1);
-          };
+    const handleGridMouseEnter = () => {
+        if (gridSliderTimeoutRef.current) {
+            clearTimeout(gridSliderTimeoutRef.current);
+            gridSliderTimeoutRef.current = null;
         }
-        break;
-      case 'tag':
-        if (tagIconImageRef.current) {
-          const iconSize = TAG_ICON_SIZE;
-          ctx.drawImage(tagIconImageRef.current, item.x - iconSize / 2, item.y - iconSize / 2, iconSize, iconSize);
-        }
-        break;
-      case 'path':
-        ctx.beginPath();
-        ctx.strokeStyle = item.strokeColor;
-        ctx.lineWidth = item.strokeWidth;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.globalAlpha = item.isHighlighter ? 0.3 : 1.0;
-        
-        if (item.points.length < 3) {
-            item.points.forEach((point, index) => {
-                if (index === 0) ctx.moveTo(point.x, point.y);
-                else ctx.lineTo(point.x, point.y);
+        setShowGridSlider(true);
+    };
+
+    const handleGridMouseLeave = () => {
+        gridSliderTimeoutRef.current = window.setTimeout(() => {
+            setShowGridSlider(false);
+        }, 300);
+    };
+
+    const handleResetZoom = () => {
+        setTransform(prev => ({ ...prev, scale: 1 }));
+    };
+
+    const getCanvasContext = useCallback(() => canvasRef.current?.getContext('2d'), []);
+
+    const getBoundingBox = (item: CanvasItem) => {
+        if (item.type === 'path') {
+            if (item.points.length === 0) return { x: item.x, y: item.y, width: 0, height: 0 };
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            item.points.forEach(p => {
+                minX = Math.min(minX, p.x);
+                minY = Math.min(minY, p.y);
+                maxX = Math.max(maxX, p.x);
+                maxY = Math.max(maxY, p.y);
             });
-        } else {
-            // Smooth curve using Quadratic Bezier
-            ctx.moveTo(item.points[0].x, item.points[0].y);
-            let i = 1;
-            for (; i < item.points.length - 2; i++) {
-                const xc = (item.points[i].x + item.points[i + 1].x) / 2;
-                const yc = (item.points[i].y + item.points[i + 1].y) / 2;
-                ctx.quadraticCurveTo(item.points[i].x, item.points[i].y, xc, yc);
-            }
-            // Curve through the last two points
-            ctx.quadraticCurveTo(
-                item.points[i].x,
-                item.points[i].y,
-                item.points[i + 1].x,
-                item.points[i + 1].y
-            );
+            return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
         }
-        
-        ctx.stroke();
-        ctx.globalAlpha = 1.0;
-        break;
-      case 'shape':
-        ctx.beginPath();
-        ctx.strokeStyle = item.strokeColor;
-        ctx.lineWidth = item.strokeWidth;
-        ctx.fillStyle = item.fillColor;
+        if (item.type === 'tag') {
+            return { x: item.x - TAG_ICON_SIZE / 2, y: item.y - TAG_ICON_SIZE / 2, width: TAG_ICON_SIZE, height: TAG_ICON_SIZE };
+        }
+        return { x: item.x, y: item.y, width: item.width, height: item.height };
+    }
 
-        const w = item.width;
-        const h = item.height;
-        const x = w < 0 ? item.x + w : item.x;
-        const y = h < 0 ? item.y + h : item.y;
-        const absW = Math.abs(w);
-        const absH = Math.abs(h);
+    const drawSelection = (ctx: CanvasRenderingContext2D, item: CanvasItem, canResize: boolean) => {
+        ctx.strokeStyle = '#3B82F6';
+        ctx.lineWidth = 2 / transform.scale;
+        ctx.setLineDash([6 / transform.scale, 4 / transform.scale]);
+        const padding = 5 / transform.scale;
+        let { x, y, width, height } = getBoundingBox(item);
+        ctx.strokeRect(x - padding, y - padding, width + padding * 2, height + padding * 2);
+        ctx.setLineDash([]);
 
-        switch (item.shape) {
-            case 'rectangle':
-                ctx.rect(x, y, absW, absH);
+        if (item.type === 'text' && canResize) {
+            const handleSize = 8 / transform.scale;
+            ctx.fillStyle = '#3B82F6';
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1 / transform.scale;
+
+            const handles = [
+                { x: x, y: y }, // top-left
+                { x: x + width, y: y }, // top-right
+                { x: x, y: y + height }, // bottom-left
+                { x: x + width, y: y + height }, // bottom-right
+            ];
+
+            handles.forEach(handle => {
+                ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                ctx.strokeRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+            });
+        }
+    }
+
+    const drawItem = useCallback((ctx: CanvasRenderingContext2D, item: CanvasItem) => {
+        if (editingText.item && editingText.item.id === item.id) return;
+
+        switch (item.type) {
+            case 'image':
+            case 'sticker':
+                const img = imageCache.current.get(item.dataUrl);
+                if (img) {
+                    ctx.drawImage(img, item.x, item.y, item.width, item.height);
+                } else {
+                    const newImg = new Image();
+                    newImg.src = item.dataUrl;
+                    newImg.onload = () => {
+                        imageCache.current.set(item.dataUrl, newImg);
+                        setImagesLoaded(c => c + 1);
+                    };
+                }
                 break;
-            case 'circle':
-                ctx.ellipse(x + absW / 2, y + absH / 2, absW / 2, absH / 2, 0, 0, 2 * Math.PI);
+            case 'tag':
+                if (tagIconImageRef.current) {
+                    const iconSize = TAG_ICON_SIZE;
+                    ctx.drawImage(tagIconImageRef.current, item.x - iconSize / 2, item.y - iconSize / 2, iconSize, iconSize);
+                }
                 break;
-            case 'triangle':
-                ctx.moveTo(x + absW / 2, y);
-                ctx.lineTo(x + absW, y + absH);
-                ctx.lineTo(x, y + absH);
-                ctx.closePath();
-                break;
-            case 'pentagon': {
-                const centerX = x + absW / 2;
-                const centerY = y + absH / 2;
-                const radiusX = absW / 2;
-                const radiusY = absH / 2;
-                const rotation = -Math.PI / 2; // Start from top point
-                ctx.moveTo(centerX + radiusX * Math.cos(rotation), centerY + radiusY * Math.sin(rotation));
-                for (let i = 1; i <= 5; i++) {
-                    ctx.lineTo(
-                        centerX + radiusX * Math.cos(rotation + i * 2 * Math.PI / 5),
-                        centerY + radiusY * Math.sin(rotation + i * 2 * Math.PI / 5)
+            case 'path':
+                ctx.beginPath();
+                ctx.strokeStyle = item.strokeColor;
+                ctx.lineWidth = item.strokeWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.globalAlpha = item.isHighlighter ? 0.3 : 1.0;
+
+                if (item.points.length < 3) {
+                    item.points.forEach((point, index) => {
+                        if (index === 0) ctx.moveTo(point.x, point.y);
+                        else ctx.lineTo(point.x, point.y);
+                    });
+                } else {
+                    // Smooth curve using Quadratic Bezier
+                    ctx.moveTo(item.points[0].x, item.points[0].y);
+                    let i = 1;
+                    for (; i < item.points.length - 2; i++) {
+                        const xc = (item.points[i].x + item.points[i + 1].x) / 2;
+                        const yc = (item.points[i].y + item.points[i + 1].y) / 2;
+                        ctx.quadraticCurveTo(item.points[i].x, item.points[i].y, xc, yc);
+                    }
+                    // Curve through the last two points
+                    ctx.quadraticCurveTo(
+                        item.points[i].x,
+                        item.points[i].y,
+                        item.points[i + 1].x,
+                        item.points[i + 1].y
                     );
                 }
+
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
                 break;
-            }
-        }
-        ctx.fill();
-        ctx.stroke();
-        break;
-      case 'text':
-        const { lines, lineHeight } = measureMultilineText(ctx, item);
-        ctx.font = `${item.isItalic ? 'italic ' : ''}${item.isBold ? 'bold ' : ''}${item.fontSize}px ${item.fontFamily}`;
-        ctx.fillStyle = item.color;
-        ctx.textBaseline = 'top';
-        lines.forEach((line, index) => {
-            ctx.fillText(line, item.x, item.y + (index * lineHeight));
-        });
-        break;
-    }
-  }, [editingText.item]);
+            case 'shape':
+                ctx.beginPath();
+                ctx.strokeStyle = item.strokeColor;
+                ctx.lineWidth = item.strokeWidth;
+                ctx.fillStyle = item.fillColor;
 
-  const drawGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    if (gridOpacity <= 0) return;
+                const w = item.width;
+                const h = item.height;
+                const x = w < 0 ? item.x + w : item.x;
+                const y = h < 0 ? item.y + h : item.y;
+                const absW = Math.abs(w);
+                const absH = Math.abs(h);
 
-    const gridSize = 50;
-    const startX = -transform.x / transform.scale;
-    const startY = -transform.y / transform.scale;
-    const endX = (width - transform.x) / transform.scale;
-    const endY = (height - transform.y) / transform.scale;
-
-    // Calculate the first line to draw that is visible
-    const firstLineX = Math.floor(startX / gridSize) * gridSize;
-    const firstLineY = Math.floor(startY / gridSize) * gridSize;
-
-    ctx.save();
-    
-    // Adjust grid color based on background color
-    const isDark = isDarkColor(backgroundColor);
-    ctx.strokeStyle = isDark ? `rgba(255, 255, 255, ${gridOpacity})` : `rgba(0, 0, 0, ${gridOpacity})`;
-    
-    // Ensure line width remains constant regardless of zoom
-    ctx.lineWidth = 1 / transform.scale;
-
-    ctx.beginPath();
-
-    // Vertical lines
-    for (let x = firstLineX; x <= endX; x += gridSize) {
-        ctx.moveTo(x, startY);
-        ctx.lineTo(x, endY);
-    }
-
-    // Horizontal lines
-    for (let y = firstLineY; y <= endY; y += gridSize) {
-        ctx.moveTo(startX, y);
-        ctx.lineTo(endX, y);
-    }
-
-    ctx.stroke();
-    ctx.restore();
-  };
-
-  const drawAll = useCallback(() => {
-    const ctx = getCanvasContext();
-    const canvas = canvasRef.current;
-    if (!ctx || !canvas) return;
-
-    ctx.save();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Transform coordinate system
-    ctx.translate(transform.x, transform.y);
-    ctx.scale(transform.scale, transform.scale);
-    
-    // Draw Grid
-    drawGrid(ctx, canvas.width, canvas.height);
-
-    const visibleItems = items.filter(item => item.visible && !erasedDuringDraw.has(item.id));
-    const sortedItems = [...visibleItems].sort((a, b) => a.zIndex - b.zIndex);
-    
-    const dragDelta = draggedState
-        ? {
-            dx: draggedState.currentMousePos.x - draggedState.startMousePos.x,
-            dy: draggedState.currentMousePos.y - draggedState.startMousePos.y,
-          }
-        : { dx: 0, dy: 0 };
-
-    sortedItems.forEach(item => {
-        let itemToDraw = item;
-        if (draggedState && selectedItemIds.includes(item.id)) {
-            const initialPos = draggedState.initialItemPositions.get(item.id);
-            if (initialPos) {
-                itemToDraw = { ...item, x: initialPos.x + dragDelta.dx, y: initialPos.y + dragDelta.dy };
-            }
-        } else if (resizingItem && item.id === resizingItem.item.id) {
-            itemToDraw = resizingItem.item;
-        }
-        drawItem(ctx, itemToDraw);
-    });
-
-    if (currentItem) drawItem(ctx, currentItem);
-    
-    if (eraserPath) {
-        ctx.strokeStyle = '#888888';
-        ctx.lineWidth = 1 / transform.scale;
-        ctx.setLineDash([4 / transform.scale, 4 / transform.scale]);
-        ctx.beginPath();
-        eraserPath.forEach((point, index) => {
-            if (index === 0) ctx.moveTo(point.x, point.y);
-            else ctx.lineTo(point.x, point.y);
-        });
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-
-    selectedItemIds.forEach(id => {
-        let itemForSelection = items.find(i => i.id === id);
-        if (itemForSelection) {
-            if (draggedState) {
-                const initialPos = draggedState.initialItemPositions.get(id);
-                if (initialPos) {
-                    itemForSelection = { ...itemForSelection, x: initialPos.x + dragDelta.dx, y: initialPos.y + dragDelta.dy };
-                }
-            } else if (resizingItem && resizingItem.item.id === id) {
-                itemForSelection = resizingItem.item;
-            }
-
-            if (itemForSelection.visible && !erasedDuringDraw.has(id)) {
-                const canResize = selectedItemIds.length === 1 && itemForSelection.type === 'text';
-                drawSelection(ctx, itemForSelection, canResize);
-            }
-        }
-    });
-
-    if (marquee) {
-        ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
-        ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)';
-        ctx.lineWidth = 1 / transform.scale;
-        ctx.setLineDash([4 / transform.scale, 2 / transform.scale]);
-        const marqueeWidth = marquee.x2 - marquee.x1;
-        const marqueeHeight = marquee.y2 - marquee.y1;
-        ctx.fillRect(marquee.x1, marquee.y1, marqueeWidth, marqueeHeight);
-        ctx.strokeRect(marquee.x1, marquee.y1, marqueeWidth, marqueeHeight);
-        ctx.setLineDash([]);
-    }
-    
-    ctx.restore();
-  }, [items, currentItem, getCanvasContext, drawItem, transform, selectedItemIds, draggedState, resizingItem, erasedDuringDraw, marquee, eraserPath, gridOpacity, backgroundColor]);
-  
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-        const resizeCanvas = () => {
-            const parent = canvas.parentElement;
-            if (parent) {
-                canvas.width = parent.clientWidth;
-                canvas.height = parent.clientHeight;
-            }
-            drawAll();
-        };
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        return () => window.removeEventListener('resize', resizeCanvas);
-    }
-  }, [drawAll]);
-  
-  useEffect(() => {
-    const svgString = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" /></svg>`;
-    const encodedSvg = window.btoa(svgString.replace('currentColor', '#3B82F6')); // Use a specific color
-    const img = new Image();
-    img.src = `data:image/svg+xml;base64,${encodedSvg}`;
-    img.onload = () => {
-        tagIconImageRef.current = img;
-        drawAll(); // Redraw canvas once the image is loaded
-    };
-}, [drawAll]);
-
-
-  const getMousePos = (e: MouseEvent | WheelEvent | React.MouseEvent | React.TouchEvent): { x: number; y: number } => {
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const touch = 'touches' in e && e.touches.length > 0
-        ? e.touches[0]
-        : ('changedTouches' in e && e.changedTouches.length > 0 ? e.changedTouches[0] : null);
-    const clientX = touch ? touch.clientX : (e as MouseEvent).clientX;
-    const clientY = touch ? touch.clientY : (e as MouseEvent).clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
-  };
-
-  const getTransformedMousePos = (e: React.MouseEvent | React.TouchEvent | WheelEvent): { x: number; y: number } => {
-    const { x: mouseX, y: mouseY } = getMousePos(e);
-    return {
-      x: (mouseX - transform.x) / transform.scale,
-      y: (mouseY - transform.y) / transform.scale,
-    };
-  };
-
-  const getItemAtPos = (x: number, y: number): CanvasItem | null => {
-    const sortedItems = [...items].sort((a, b) => b.zIndex - a.zIndex);
-    for (const item of sortedItems) {
-        if (!item.visible) continue;
-
-        if (item.type === 'image' || item.type === 'shape' || item.type === 'text' || item.type === 'sticker') {
-            if (x >= item.x && x <= item.x + item.width && y >= item.y && y <= item.y + item.height) {
-                return item;
-            }
-        } else if (item.type === 'path') {
-            const margin = item.strokeWidth / 2 + 5;
-            for (const point of item.points) {
-                const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-                if (distance < margin) {
-                    return item;
-                }
-            }
-        } else if (item.type === 'tag') {
-            const iconSize = TAG_ICON_SIZE;
-            if (x >= item.x - iconSize / 2 && x <= item.x + iconSize / 2 && y >= item.y - iconSize / 2 && y <= item.y + iconSize / 2) {
-                return item;
-            }
-        }
-    }
-    return null;
-  };
-
-  const getResizeHandleAtPos = (x: number, y: number, item: TextItem): string | null => {
-    const { x: itemX, y: itemY, width, height } = getBoundingBox(item);
-    const handleSize = 10 / transform.scale;
-    const halfHandle = handleSize / 2;
-
-    const handles = {
-        'top-left': { x: itemX, y: itemY },
-        'top-right': { x: itemX + width, y: itemY },
-        'bottom-left': { x: itemX, y: itemY + height },
-        'bottom-right': { x: itemX + width, y: itemY + height },
-    };
-
-    for (const [name, pos] of Object.entries(handles)) {
-        if (
-            x >= pos.x - halfHandle && x <= pos.x + halfHandle &&
-            y >= pos.y - halfHandle && y <= pos.y + halfHandle
-        ) {
-            return name;
-        }
-    }
-    return null;
-  };
-
-  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
-    if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-    }
-    
-    // Check for multi-touch (Pinch start)
-    if ('touches' in e && e.touches.length === 2) {
-        const rect = canvasRef.current!.getBoundingClientRect();
-        pinchStartRef.current = {
-            distance: getTouchDistance(e.touches),
-            transform: { ...transform },
-            midPointScreen: getTouchMidpoint(e.touches, rect)
-        };
-        // Cancel any single-finger actions
-        setIsDrawing(false);
-        setDraggedState(null);
-        setCurrentItem(null);
-        setEraserPath(null);
-        setMarquee(null);
-        setResizingItem(null);
-        return;
-    }
-    
-    if ('button' in e && e.button !== 0) return;
-    if (editingText.item) return;
-    
-    const { x, y } = getTransformedMousePos(e);
-
-    const isPanActive = isPanningMode || selectedTool === 'hand';
-    if (isPanActive) {
-      const mousePos = getMousePos(e);
-      lastMousePosRef.current = mousePos;
-      panStartPosRef.current = mousePos;
-      setIsDrawing(true); // This is for panning
-      velocityRef.current = { x: 0, y: 0 };
-      lastMoveTimeRef.current = Date.now();
-      return;
-    }
-    
-    if (selectedTool === 'tag') {
-        const newTagItem: Omit<TagItem, 'title' | 'zIndex'> = {
-            id: generateId(), type: 'tag', x, y, visible: true,
-        };
-        setItems(currentItems => {
-            const maxZIndex = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.zIndex)) : -1;
-            const tagCount = currentItems.filter(i => i.type === 'tag').length;
-            const finalTagItem: TagItem = {
-                 ...newTagItem,
-                 title: `Tag ${tagCount + 1}`,
-                 zIndex: maxZIndex + 1
-            };
-            return [...currentItems, finalTagItem];
-        });
-        return; // This is a single-click action, don't enter drawing mode
-    }
-
-    if (selectedTool === 'sticker') {
-        const { stickerType, stickerSize } = toolOptions;
-        const svgString = stickerSvgs[stickerType];
-        const dataUrl = 'data:image/svg+xml;base64,' + btoa(svgString);
-        
-        const newStickerItem: StickerItem = {
-            id: generateId(),
-            type: 'sticker',
-            stickerType,
-            dataUrl,
-            width: stickerSize,
-            height: stickerSize,
-            x: x - stickerSize / 2,
-            y: y - stickerSize / 2,
-            zIndex: 0,
-            visible: true,
-        };
-
-        setItems(currentItems => {
-            const maxZIndex = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.zIndex)) : -1;
-            return [...currentItems, { ...newStickerItem, zIndex: maxZIndex + 1 }];
-        });
-        return; // single-click action
-    }
-
-    if (selectedTool === 'select') {
-        setIsDrawing(true);
-        const selectedItemIfOnlyOne = selectedItemIds.length === 1 ? items.find(i => i.id === selectedItemIds[0]) : null;
-        if (selectedItemIfOnlyOne?.type === 'text') {
-            const handle = getResizeHandleAtPos(x, y, selectedItemIfOnlyOne);
-            if (handle) {
-                setResizingItem({
-                    item: selectedItemIfOnlyOne,
-                    originalItem: { ...selectedItemIfOnlyOne },
-                    handle,
-                    startX: x,
-                    startY: y
-                });
-                return;
-            }
-        }
-        
-        const item = getItemAtPos(x, y);
-
-        if (item) {
-            const isShift = 'shiftKey' in e && e.shiftKey;
-            const isSelected = selectedItemIds.includes(item.id);
-
-            let nextSelection = [...selectedItemIds];
-            if (isShift) {
-                nextSelection = isSelected ? nextSelection.filter(id => id !== item.id) : [...nextSelection, item.id];
-            } else if (!isSelected) {
-                nextSelection = [item.id];
-            }
-            setSelectedItemIds(nextSelection);
-            
-            const initialPositions = new Map<string, { x: number, y: number }>();
-            items.forEach(i => {
-                if (nextSelection.includes(i.id)) {
-                    initialPositions.set(i.id, { x: i.x, y: i.y });
-                }
-            });
-            
-            setDraggedState({
-                startMousePos: { x, y },
-                currentMousePos: { x, y },
-                initialItemPositions: initialPositions
-            });
-
-        } else {
-            // Clicked on empty space, start marquee
-            setSelectedItemIds([]);
-            setMarquee({ x1: x, y1: y, x2: x, y2: y });
-        }
-    } else if (selectedTool === 'text') {
-        e.preventDefault();
-        const newTextItem: TextItem = {
-            id: generateId(), type: 'text', x, y, text: '',
-            color: toolOptions.strokeColor, fontSize: toolOptions.fontSize,
-            fontFamily: 'sans-serif', isBold: toolOptions.isBold, isItalic: toolOptions.isItalic,
-            width: 1, height: toolOptions.fontSize * 1.2, // Start with a minimal size
-            zIndex: 0, visible: true
-        };
-        setEditingText({ item: newTextItem, isNew: true });
-    } else if (selectedTool === 'pen' || selectedTool === 'highlighter') {
-        setIsDrawing(true);
-        setCurrentItem({
-            id: generateId(), type: 'path', x, y, points: [{ x, y }],
-            strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
-            isHighlighter: selectedTool === 'highlighter',
-            zIndex: 0, visible: true
-        } as PathItem);
-    } else if (['rectangle', 'circle', 'triangle', 'pentagon'].includes(selectedTool)) {
-        setIsDrawing(true);
-        setCurrentItem({
-            id: generateId(), type: 'shape', shape: selectedTool as ShapeType, x, y, width: 0, height: 0,
-            strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
-            fillColor: toolOptions.fillColor,
-            zIndex: 0, visible: true
-        } as ShapeItem);
-    } else if (selectedTool === 'eraser') {
-      setIsDrawing(true);
-      const isCtrl = 'ctrlKey' in e && (e.ctrlKey || e.metaKey);
-      setIsPartialErasing(isCtrl);
-
-      if (isCtrl) {
-          setEraserPath([{x, y}]);
-      } else {
-          eraserLastPosRef.current = {x, y};
-          const item = getItemAtPos(x, y);
-          if (item && !(item.type === 'image' && item.isPdfPage)) {
-              setErasedDuringDraw(new Set([item.id]));
-          }
-      }
-    }
-  };
-
-  const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas || editingText.item) return;
-
-    // Check for multi-touch (Pinch move)
-    if ('touches' in e && e.touches.length === 2) {
-        e.preventDefault(); // Prevent browser zoom
-        if (!pinchStartRef.current) {
-             const rect = canvasRef.current!.getBoundingClientRect();
-             pinchStartRef.current = {
-                distance: getTouchDistance(e.touches),
-                transform: { ...transform },
-                midPointScreen: getTouchMidpoint(e.touches, rect)
-             };
-             return;
-        }
-
-        const rect = canvasRef.current!.getBoundingClientRect();
-        const newDistance = getTouchDistance(e.touches);
-        const newMidPoint = getTouchMidpoint(e.touches, rect);
-        
-        const oldDistance = pinchStartRef.current.distance;
-        const oldMidPoint = pinchStartRef.current.midPointScreen;
-        
-        if (oldDistance > 0) {
-             const scaleRatio = newDistance / oldDistance;
-             
-             setTransform(prev => {
-                const newScale = Math.max(0.1, Math.min(prev.scale * scaleRatio, 10));
-                // Incremental update to keep the point under the fingers stable
-                // Effective scale ratio based on previous frame's scale
-                const effectiveScaleRatio = newScale / prev.scale;
-
-                const newX = newMidPoint.x - (oldMidPoint.x - prev.x) * effectiveScaleRatio;
-                const newY = newMidPoint.y - (oldMidPoint.y - prev.y) * effectiveScaleRatio;
-
-                return {
-                    scale: newScale,
-                    x: newX,
-                    y: newY
-                };
-             });
-        }
-
-        // Update ref for next frame
-        pinchStartRef.current = {
-            distance: newDistance,
-            transform: { ...transform }, 
-            midPointScreen: newMidPoint
-        };
-        return;
-    }
-
-    if (!isDrawing) {
-        const isPanActive = isPanningMode || selectedTool === 'hand';
-        if (selectedTool === 'select' && !isPanActive) {
-            const { x, y } = getTransformedMousePos(e);
-            const selectedItemIfOne = selectedItemIds.length === 1 ? items.find(i => i.id === selectedItemIds[0]) : null;
-            if (selectedItemIfOne?.type === 'text') {
-                const handle = getResizeHandleAtPos(x, y, selectedItemIfOne);
-                if (handle) {
-                    canvas.style.cursor = (handle === 'top-left' || handle === 'bottom-right') ? 'nwse-resize' : 'nesw-resize';
-                    return;
-                }
-            }
-            const item = getItemAtPos(x, y);
-            canvas.style.cursor = item ? 'grab' : 'default';
-        }
-        return;
-    }
-
-    const isPanActive = isPanningMode || selectedTool === 'hand';
-    if (isPanActive) {
-      const { x, y } = getMousePos(e);
-      const now = Date.now();
-      const dt = now - (lastMoveTimeRef.current || now);
-      
-      const dx = x - lastMousePosRef.current.x;
-      const dy = y - lastMousePosRef.current.y;
-      
-      if (dt > 0) {
-        const vx = dx / dt * 16.67; // Velocity in pixels per frame (assuming 60fps)
-        const vy = dy / dt * 16.67;
-        velocityRef.current.x = velocityRef.current.x * 0.8 + vx * 0.2; // Smoothed velocity
-        velocityRef.current.y = velocityRef.current.y * 0.8 + vy * 0.2;
-      }
-
-      lastMousePosRef.current = { x, y };
-      lastMoveTimeRef.current = now;
-      setTransform(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
-      return;
-    }
-
-    const { x, y } = getTransformedMousePos(e);
-    
-    if (selectedTool === 'eraser' && isDrawing) {
-        if (isPartialErasing) {
-            setEraserPath(prev => prev ? [...prev, { x, y }] : null);
-        } else {
-            const prevPos = eraserLastPosRef.current;
-            if (prevPos) {
-                const newErasedIds = new Set<string>();
-                items.forEach(item => {
-                    if ((item.type === 'image' && item.isPdfPage) || erasedDuringDraw.has(item.id)) return;
-                    
-                    const bb = getBoundingBox(item);
-                    if (lineSegmentIntersectsAABB({x: prevPos.x, y: prevPos.y}, {x, y}, bb)) {
-                         newErasedIds.add(item.id);
-                    }
-                });
-
-                if (newErasedIds.size > 0) {
-                    setErasedDuringDraw(prev => {
-                        const updatedSet = new Set(prev);
-                        newErasedIds.forEach(id => updatedSet.add(id));
-                        return updatedSet;
-                    });
-                }
-            }
-            eraserLastPosRef.current = {x, y};
-        }
-        return;
-    }
-
-    if (marquee) {
-        setMarquee(prev => prev ? { ...prev, x2: x, y2: y } : null);
-        return;
-    }
-
-    if (resizingItem) {
-        const { originalItem, startX } = resizingItem;
-        const centerX = originalItem.x + originalItem.width / 2;
-        const centerY = originalItem.y + originalItem.height / 2;
-        
-        const originalDist = Math.sqrt(Math.pow(startX - centerX, 2) + Math.pow(resizingItem.startY - centerY, 2));
-        const currentDist = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-        const scaleFactor = originalDist > 0 ? currentDist / originalDist : 1;
-        
-        let newFontSize = Math.round(originalItem.fontSize * scaleFactor);
-        newFontSize = Math.max(8, Math.min(newFontSize, 512));
-
-        if (newFontSize !== resizingItem.item.fontSize) {
-            const ctx = getCanvasContext();
-            if (!ctx) return;
-            const { width, height } = measureMultilineText(ctx, { ...originalItem, fontSize: newFontSize });
-            const newX = centerX - width / 2;
-            const newY = centerY - height / 2;
-            const updatedItem: TextItem = { ...resizingItem.originalItem, fontSize: newFontSize, width, height, x: newX, y: newY };
-            setResizingItem(prev => prev ? { ...prev, item: updatedItem } : null);
-        }
-    } else if (draggedState) {
-        setDraggedState(prev => prev ? { ...prev, currentMousePos: { x, y } } : null);
-    } else if (currentItem) {
-        const isShiftPressed = 'shiftKey' in e && e.shiftKey;
-        const isAltPressed = 'altKey' in e && e.altKey;
-
-        if (currentItem.type === 'path') {
-            if (isShiftPressed) {
-                const startPoint = currentItem.points[0];
-                if (isAltPressed) {
-                    // Alt + Shift: simple straight line
-                    setCurrentItem({ ...currentItem, points: [startPoint, { x, y }]});
-                } else {
-                    // Shift only: angle snapping
-                    const dx = x - startPoint.x;
-                    const dy = y - startPoint.y;
-
-                    if (dx === 0 && dy === 0) {
-                        setCurrentItem({ ...currentItem, points: [startPoint, { x, y }]});
-                        return;
-                    }
-
-                    const angle = Math.atan2(dy, dx);
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-
-                    // Snap to the closest angle among multiples of 30 and 45 degrees
-                    const snapAngle45 = Math.PI / 4;
-                    const snapAngle30 = Math.PI / 6;
-                    
-                    const snappedTo45 = Math.round(angle / snapAngle45) * snapAngle45;
-                    const snappedTo30 = Math.round(angle / snapAngle30) * snapAngle30;
-
-                    const diff45 = Math.abs(angle - snappedTo45);
-                    const diff30 = Math.abs(angle - snappedTo30);
-                    
-                    const finalAngle = diff30 < diff45 ? snappedTo30 : snappedTo45;
-
-                    const snappedX = startPoint.x + dist * Math.cos(finalAngle);
-                    const snappedY = startPoint.y + dist * Math.sin(finalAngle);
-
-                    setCurrentItem({ ...currentItem, points: [startPoint, { x: snappedX, y: snappedY }]});
-                }
-            } else {
-                // No Shift: freeform drawing
-                const lastPoint = currentItem.points[currentItem.points.length - 1];
-                const dist = Math.sqrt(Math.pow(x - lastPoint.x, 2) + Math.pow(y - lastPoint.y, 2));
-                
-                // Throttle points to avoid jitter and reduce data points
-                if (dist > 2) {
-                    setCurrentItem({ ...currentItem, points: [...currentItem.points, { x, y }]});
-                }
-            }
-        } else if (currentItem.type === 'shape') {
-            let width = x - currentItem.x;
-            let height = y - currentItem.y;
-
-            if (isShiftPressed) {
-                // Constrain to a perfect shape (e.g., square or circle)
-                const maxDim = Math.max(Math.abs(width), Math.abs(height));
-                width = Math.sign(width) * maxDim;
-                height = Math.sign(height) * maxDim;
-            }
-            setCurrentItem({ ...currentItem, width, height });
-        }
-    }
-  };
-
-  const handlePointerUp = (e: React.MouseEvent | React.TouchEvent) => {
-    // Check pinch end
-    if (pinchStartRef.current && (!('touches' in e) || e.touches.length < 2)) {
-        pinchStartRef.current = null;
-        // Don't trigger other up logic immediately after zoom
-        return;
-    }
-
-    const wasPanning = isDrawing && (isPanningMode || selectedTool === 'hand');
-    
-    // Check for pause before release to stop inertia
-    const PAUSE_THRESHOLD = 100; // ms
-    const timeSinceLastMove = Date.now() - (lastMoveTimeRef.current || 0);
-    
-    if (wasPanning && timeSinceLastMove > PAUSE_THRESHOLD) {
-       velocityRef.current = { x: 0, y: 0 };
-    }
-
-    if (selectedTool === 'eraser' && isPartialErasing && eraserPath && eraserPath.length > 1) {
-        const ERASE_RADIUS = (toolOptions.strokeWidth / 2) / transform.scale;
-        
-        const modifiedItems: { [id: string]: PathItem[] } = {};
-        const itemsToDelete = new Set<string>();
-
-        items.forEach(item => {
-            if (item.type !== 'path') return;
-            
-            const newSegments: { x: number, y: number }[][] = [];
-            let currentSegment: { x: number, y: number }[] = [];
-
-            item.points.forEach(point => {
-                let isPointErased = false;
-                for (const eraserPoint of eraserPath) {
-                    const distSq = (point.x - eraserPoint.x)**2 + (point.y - eraserPoint.y)**2;
-                    if (distSq < ERASE_RADIUS**2) {
-                        isPointErased = true;
+                switch (item.shape) {
+                    case 'rectangle':
+                        ctx.rect(x, y, absW, absH);
+                        break;
+                    case 'circle':
+                        ctx.ellipse(x + absW / 2, y + absH / 2, absW / 2, absH / 2, 0, 0, 2 * Math.PI);
+                        break;
+                    case 'triangle':
+                        ctx.moveTo(x + absW / 2, y);
+                        ctx.lineTo(x + absW, y + absH);
+                        ctx.lineTo(x, y + absH);
+                        ctx.closePath();
+                        break;
+                    case 'pentagon': {
+                        const centerX = x + absW / 2;
+                        const centerY = y + absH / 2;
+                        const radiusX = absW / 2;
+                        const radiusY = absH / 2;
+                        const rotation = -Math.PI / 2; // Start from top point
+                        ctx.moveTo(centerX + radiusX * Math.cos(rotation), centerY + radiusY * Math.sin(rotation));
+                        for (let i = 1; i <= 5; i++) {
+                            ctx.lineTo(
+                                centerX + radiusX * Math.cos(rotation + i * 2 * Math.PI / 5),
+                                centerY + radiusY * Math.sin(rotation + i * 2 * Math.PI / 5)
+                            );
+                        }
                         break;
                     }
                 }
-                
-                if (isPointErased) {
-                    if (currentSegment.length > 1) {
-                        newSegments.push(currentSegment);
-                    }
-                    currentSegment = [];
-                } else {
-                    currentSegment.push(point);
-                }
-            });
+                ctx.fill();
+                ctx.stroke();
+                break;
+            case 'text':
+                const { lines, lineHeight } = measureMultilineText(ctx, item);
+                ctx.font = `${item.isItalic ? 'italic ' : ''}${item.isBold ? 'bold ' : ''}${item.fontSize}px ${item.fontFamily}`;
+                ctx.fillStyle = item.color;
+                ctx.textBaseline = 'top';
+                lines.forEach((line, index) => {
+                    ctx.fillText(line, item.x, item.y + (index * lineHeight));
+                });
+                break;
+        }
+    }, [editingText.item]);
 
-            if (currentSegment.length > 1) {
-                newSegments.push(currentSegment);
+    const drawGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+        if (gridOpacity <= 0) return;
+
+        const gridSize = 50;
+        const startX = -transform.x / transform.scale;
+        const startY = -transform.y / transform.scale;
+        const endX = (width - transform.x) / transform.scale;
+        const endY = (height - transform.y) / transform.scale;
+
+        // Calculate the first line to draw that is visible
+        const firstLineX = Math.floor(startX / gridSize) * gridSize;
+        const firstLineY = Math.floor(startY / gridSize) * gridSize;
+
+        ctx.save();
+
+        // Adjust grid color based on background color
+        const isDark = isDarkColor(backgroundColor);
+        ctx.strokeStyle = isDark ? `rgba(255, 255, 255, ${gridOpacity})` : `rgba(0, 0, 0, ${gridOpacity})`;
+
+        // Ensure line width remains constant regardless of zoom
+        ctx.lineWidth = 1 / transform.scale;
+
+        ctx.beginPath();
+
+        // Vertical lines
+        for (let x = firstLineX; x <= endX; x += gridSize) {
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, endY);
+        }
+
+        // Horizontal lines
+        for (let y = firstLineY; y <= endY; y += gridSize) {
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
+        }
+
+        ctx.stroke();
+        ctx.restore();
+    };
+
+    const drawAll = useCallback(() => {
+        const ctx = getCanvasContext();
+        const canvas = canvasRef.current;
+        if (!ctx || !canvas) return;
+
+        ctx.save();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Transform coordinate system
+        ctx.translate(transform.x, transform.y);
+        ctx.scale(transform.scale, transform.scale);
+
+        // Draw Grid
+        drawGrid(ctx, canvas.width, canvas.height);
+
+        const visibleItems = items.filter(item => item.visible && !erasedDuringDraw.has(item.id));
+        const sortedItems = [...visibleItems].sort((a, b) => a.zIndex - b.zIndex);
+
+        const dragDelta = draggedState
+            ? {
+                dx: draggedState.currentMousePos.x - draggedState.startMousePos.x,
+                dy: draggedState.currentMousePos.y - draggedState.startMousePos.y,
             }
+            : { dx: 0, dy: 0 };
 
-            if (newSegments.length !== 1 || newSegments[0].length !== item.points.length) {
-                itemsToDelete.add(item.id);
-                modifiedItems[item.id] = newSegments.map(points => ({
-                    ...item,
-                    id: generateId(),
-                    points,
-                    x: points[0].x,
-                    y: points[0].y,
-                }));
+        sortedItems.forEach(item => {
+            let itemToDraw = item;
+            if (draggedState && selectedItemIds.includes(item.id)) {
+                const initialPos = draggedState.initialItemPositions.get(item.id);
+                if (initialPos) {
+                    itemToDraw = { ...item, x: initialPos.x + dragDelta.dx, y: initialPos.y + dragDelta.dy };
+                }
+            } else if (resizingItem && item.id === resizingItem.item.id) {
+                itemToDraw = resizingItem.item;
+            }
+            drawItem(ctx, itemToDraw);
+        });
+
+        if (currentItem) drawItem(ctx, currentItem);
+
+        if (eraserPath) {
+            ctx.strokeStyle = '#888888';
+            ctx.lineWidth = 1 / transform.scale;
+            ctx.setLineDash([4 / transform.scale, 4 / transform.scale]);
+            ctx.beginPath();
+            eraserPath.forEach((point, index) => {
+                if (index === 0) ctx.moveTo(point.x, point.y);
+                else ctx.lineTo(point.x, point.y);
+            });
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        selectedItemIds.forEach(id => {
+            let itemForSelection = items.find(i => i.id === id);
+            if (itemForSelection) {
+                if (draggedState) {
+                    const initialPos = draggedState.initialItemPositions.get(id);
+                    if (initialPos) {
+                        itemForSelection = { ...itemForSelection, x: initialPos.x + dragDelta.dx, y: initialPos.y + dragDelta.dy };
+                    }
+                } else if (resizingItem && resizingItem.item.id === id) {
+                    itemForSelection = resizingItem.item;
+                }
+
+                if (itemForSelection.visible && !erasedDuringDraw.has(id)) {
+                    const canResize = selectedItemIds.length === 1 && itemForSelection.type === 'text';
+                    drawSelection(ctx, itemForSelection, canResize);
+                }
             }
         });
 
-        if (itemsToDelete.size > 0) {
-            setItems(prev => {
-                const remaining = prev.filter(i => !itemsToDelete.has(i.id));
-                const newPathItems = Object.values(modifiedItems).flat();
-                return [...remaining, ...newPathItems];
-            });
+        if (marquee) {
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)';
+            ctx.lineWidth = 1 / transform.scale;
+            ctx.setLineDash([4 / transform.scale, 2 / transform.scale]);
+            const marqueeWidth = marquee.x2 - marquee.x1;
+            const marqueeHeight = marquee.y2 - marquee.y1;
+            ctx.fillRect(marquee.x1, marquee.y1, marqueeWidth, marqueeHeight);
+            ctx.strokeRect(marquee.x1, marquee.y1, marqueeWidth, marqueeHeight);
+            ctx.setLineDash([]);
         }
-    }
-    setIsPartialErasing(false);
-    setEraserPath(null);
-    eraserLastPosRef.current = null;
 
+        ctx.restore();
+    }, [items, currentItem, getCanvasContext, drawItem, transform, selectedItemIds, draggedState, resizingItem, erasedDuringDraw, marquee, eraserPath, gridOpacity, backgroundColor]);
 
-    if (marquee) {
-        const { x1, y1, x2, y2 } = marquee;
-        const minX = Math.min(x1, x2);
-        const maxX = Math.max(x1, x2);
-        const minY = Math.min(y1, y2);
-        const maxY = Math.max(y1, y2);
-
-        if (Math.abs(x1 - x2) > 5 || Math.abs(y1 - y2) > 5) { // Only select if marquee is big enough
-            const selectedIds = items.filter(item => {
-                if (!item.visible) return false;
-                const bb = getBoundingBox(item);
-                return bb.x < maxX && bb.x + bb.width > minX && bb.y < maxY && bb.y + bb.height > minY;
-            }).map(item => item.id);
-            setSelectedItemIds(selectedIds);
-        }
-        setMarquee(null);
-    }
-    if (resizingItem) {
-        setItems(prev => prev.map(i => i.id === resizingItem.item.id ? resizingItem.item : i));
-        setResizingItem(null);
-    }
-    if (draggedState) {
-        const { x: endX, y: endY } = getTransformedMousePos(e);
-        const dx = endX - draggedState.startMousePos.x;
-        const dy = endY - draggedState.startMousePos.y;
-        
-        if (dx !== 0 || dy !== 0) {
-             setItems(prevItems => prevItems.map(item => {
-                const initialPos = draggedState.initialItemPositions.get(item.id);
-                if (initialPos) {
-                    return { ...item, x: initialPos.x + dx, y: initialPos.y + dy };
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+            const resizeCanvas = () => {
+                const parent = canvas.parentElement;
+                if (parent) {
+                    canvas.width = parent.clientWidth;
+                    canvas.height = parent.clientHeight;
                 }
-                return item;
+                drawAll();
+            };
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            return () => window.removeEventListener('resize', resizeCanvas);
+        }
+    }, [drawAll]);
+
+    useEffect(() => {
+        drawAll();
+    }, [imagesLoaded, drawAll]);
+
+    useEffect(() => {
+        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" /></svg>`;
+        const encodedSvg = window.btoa(svgString.replace('currentColor', '#3B82F6')); // Use a specific color
+        const img = new Image();
+        img.src = `data:image/svg+xml;base64,${encodedSvg}`;
+        img.onload = () => {
+            tagIconImageRef.current = img;
+            drawAll(); // Redraw canvas once the image is loaded
+        };
+    }, [drawAll]);
+
+
+    const getMousePos = (e: MouseEvent | WheelEvent | React.MouseEvent | React.TouchEvent): { x: number; y: number } => {
+        const rect = canvasRef.current!.getBoundingClientRect();
+        const touch = 'touches' in e && e.touches.length > 0
+            ? e.touches[0]
+            : ('changedTouches' in e && e.changedTouches.length > 0 ? e.changedTouches[0] : null);
+        const clientX = touch ? touch.clientX : (e as MouseEvent).clientX;
+        const clientY = touch ? touch.clientY : (e as MouseEvent).clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const getTransformedMousePos = (e: React.MouseEvent | React.TouchEvent | WheelEvent): { x: number; y: number } => {
+        const { x: mouseX, y: mouseY } = getMousePos(e);
+        return {
+            x: (mouseX - transform.x) / transform.scale,
+            y: (mouseY - transform.y) / transform.scale,
+        };
+    };
+
+    const getItemAtPos = (x: number, y: number): CanvasItem | null => {
+        const sortedItems = [...items].sort((a, b) => b.zIndex - a.zIndex);
+        for (const item of sortedItems) {
+            if (!item.visible) continue;
+
+            if (item.type === 'image' || item.type === 'shape' || item.type === 'text' || item.type === 'sticker') {
+                if (x >= item.x && x <= item.x + item.width && y >= item.y && y <= item.y + item.height) {
+                    return item;
+                }
+            } else if (item.type === 'path') {
+                const margin = item.strokeWidth / 2 + 5;
+                for (const point of item.points) {
+                    const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
+                    if (distance < margin) {
+                        return item;
+                    }
+                }
+            } else if (item.type === 'tag') {
+                const iconSize = TAG_ICON_SIZE;
+                if (x >= item.x - iconSize / 2 && x <= item.x + iconSize / 2 && y >= item.y - iconSize / 2 && y <= item.y + iconSize / 2) {
+                    return item;
+                }
+            }
+        }
+        return null;
+    };
+
+    const getResizeHandleAtPos = (x: number, y: number, item: TextItem): string | null => {
+        const { x: itemX, y: itemY, width, height } = getBoundingBox(item);
+        const handleSize = 10 / transform.scale;
+        const halfHandle = handleSize / 2;
+
+        const handles = {
+            'top-left': { x: itemX, y: itemY },
+            'top-right': { x: itemX + width, y: itemY },
+            'bottom-left': { x: itemX, y: itemY + height },
+            'bottom-right': { x: itemX + width, y: itemY + height },
+        };
+
+        for (const [name, pos] of Object.entries(handles)) {
+            if (
+                x >= pos.x - halfHandle && x <= pos.x + halfHandle &&
+                y >= pos.y - halfHandle && y <= pos.y + halfHandle
+            ) {
+                return name;
+            }
+        }
+        return null;
+    };
+
+    const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
+
+        // Check for multi-touch (Pinch start)
+        if ('touches' in e && e.touches.length === 2) {
+            const rect = canvasRef.current!.getBoundingClientRect();
+            pinchStartRef.current = {
+                distance: getTouchDistance(e.touches),
+                transform: { ...transform },
+                midPointScreen: getTouchMidpoint(e.touches, rect)
+            };
+            // Cancel any single-finger actions
+            setIsDrawing(false);
+            setDraggedState(null);
+            setCurrentItem(null);
+            setEraserPath(null);
+            setMarquee(null);
+            setResizingItem(null);
+            return;
+        }
+
+        if ('button' in e && e.button !== 0) return;
+        if (editingText.item) return;
+
+        const { x, y } = getTransformedMousePos(e);
+
+        const isPanActive = isPanningMode || selectedTool === 'hand';
+        if (isPanActive) {
+            const mousePos = getMousePos(e);
+            lastMousePosRef.current = mousePos;
+            panStartPosRef.current = mousePos;
+            setIsDrawing(true); // This is for panning
+            velocityRef.current = { x: 0, y: 0 };
+            lastMoveTimeRef.current = Date.now();
+            return;
+        }
+
+        if (selectedTool === 'tag') {
+            const newTagItem: Omit<TagItem, 'title' | 'zIndex'> = {
+                id: generateId(), type: 'tag', x, y, visible: true,
+            };
+            setItems(currentItems => {
+                const maxZIndex = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.zIndex)) : -1;
+                const tagCount = currentItems.filter(i => i.type === 'tag').length;
+                const finalTagItem: TagItem = {
+                    ...newTagItem,
+                    title: `Tag ${tagCount + 1}`,
+                    zIndex: maxZIndex + 1
+                };
+                return [...currentItems, finalTagItem];
+            });
+            return; // This is a single-click action, don't enter drawing mode
+        }
+
+        if (selectedTool === 'sticker') {
+            const { stickerType, stickerSize } = toolOptions;
+            const svgString = stickerSvgs[stickerType];
+            const dataUrl = 'data:image/svg+xml;base64,' + btoa(svgString);
+
+            const newStickerItem: StickerItem = {
+                id: generateId(),
+                type: 'sticker',
+                stickerType,
+                dataUrl,
+                width: stickerSize,
+                height: stickerSize,
+                x: x - stickerSize / 2,
+                y: y - stickerSize / 2,
+                zIndex: 0,
+                visible: true,
+            };
+
+            setItems(currentItems => {
+                const maxZIndex = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.zIndex)) : -1;
+                return [...currentItems, { ...newStickerItem, zIndex: maxZIndex + 1 }];
+            });
+            return; // single-click action
+        }
+
+        if (selectedTool === 'select') {
+            setIsDrawing(true);
+            const selectedItemIfOnlyOne = selectedItemIds.length === 1 ? items.find(i => i.id === selectedItemIds[0]) : null;
+            if (selectedItemIfOnlyOne?.type === 'text') {
+                const handle = getResizeHandleAtPos(x, y, selectedItemIfOnlyOne);
+                if (handle) {
+                    setResizingItem({
+                        item: selectedItemIfOnlyOne,
+                        originalItem: { ...selectedItemIfOnlyOne },
+                        handle,
+                        startX: x,
+                        startY: y
+                    });
+                    return;
+                }
+            }
+
+            const item = getItemAtPos(x, y);
+
+            if (item) {
+                const isShift = 'shiftKey' in e && e.shiftKey;
+                const isSelected = selectedItemIds.includes(item.id);
+
+                let nextSelection = [...selectedItemIds];
+                if (isShift) {
+                    nextSelection = isSelected ? nextSelection.filter(id => id !== item.id) : [...nextSelection, item.id];
+                } else if (!isSelected) {
+                    nextSelection = [item.id];
+                }
+                setSelectedItemIds(nextSelection);
+
+                const initialPositions = new Map<string, { x: number, y: number }>();
+                items.forEach(i => {
+                    if (nextSelection.includes(i.id)) {
+                        initialPositions.set(i.id, { x: i.x, y: i.y });
+                    }
+                });
+
+                setDraggedState({
+                    startMousePos: { x, y },
+                    currentMousePos: { x, y },
+                    initialItemPositions: initialPositions
+                });
+
+            } else {
+                // Clicked on empty space, start marquee
+                setSelectedItemIds([]);
+                setMarquee({ x1: x, y1: y, x2: x, y2: y });
+            }
+        } else if (selectedTool === 'text') {
+            e.preventDefault();
+            const newTextItem: TextItem = {
+                id: generateId(), type: 'text', x, y, text: '',
+                color: toolOptions.strokeColor, fontSize: toolOptions.fontSize,
+                fontFamily: 'sans-serif', isBold: toolOptions.isBold, isItalic: toolOptions.isItalic,
+                width: 1, height: toolOptions.fontSize * 1.2, // Start with a minimal size
+                zIndex: 0, visible: true
+            };
+            setEditingText({ item: newTextItem, isNew: true });
+        } else if (selectedTool === 'pen' || selectedTool === 'highlighter') {
+            setIsDrawing(true);
+            setCurrentItem({
+                id: generateId(), type: 'path', x, y, points: [{ x, y }],
+                strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
+                isHighlighter: selectedTool === 'highlighter',
+                zIndex: 0, visible: true
+            } as PathItem);
+        } else if (['rectangle', 'circle', 'triangle', 'pentagon'].includes(selectedTool)) {
+            setIsDrawing(true);
+            setCurrentItem({
+                id: generateId(), type: 'shape', shape: selectedTool as ShapeType, x, y, width: 0, height: 0,
+                strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
+                fillColor: toolOptions.fillColor,
+                zIndex: 0, visible: true
+            } as ShapeItem);
+        } else if (selectedTool === 'eraser') {
+            setIsDrawing(true);
+            const isCtrl = 'ctrlKey' in e && (e.ctrlKey || e.metaKey);
+            setIsPartialErasing(isCtrl);
+
+            if (isCtrl) {
+                setEraserPath([{ x, y }]);
+            } else {
+                eraserLastPosRef.current = { x, y };
+                const item = getItemAtPos(x, y);
+                if (item && !(item.type === 'image' && item.isPdfPage)) {
+                    setErasedDuringDraw(new Set([item.id]));
+                }
+            }
+        }
+    };
+
+    const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
+        const canvas = canvasRef.current;
+        if (!canvas || editingText.item) return;
+
+        // Check for multi-touch (Pinch move)
+        if ('touches' in e && e.touches.length === 2) {
+            e.preventDefault(); // Prevent browser zoom
+            if (!pinchStartRef.current) {
+                const rect = canvasRef.current!.getBoundingClientRect();
+                pinchStartRef.current = {
+                    distance: getTouchDistance(e.touches),
+                    transform: { ...transform },
+                    midPointScreen: getTouchMidpoint(e.touches, rect)
+                };
+                return;
+            }
+
+            const rect = canvasRef.current!.getBoundingClientRect();
+            const newDistance = getTouchDistance(e.touches);
+            const newMidPoint = getTouchMidpoint(e.touches, rect);
+
+            const oldDistance = pinchStartRef.current.distance;
+            const oldMidPoint = pinchStartRef.current.midPointScreen;
+
+            if (oldDistance > 0) {
+                const scaleRatio = newDistance / oldDistance;
+
+                setTransform(prev => {
+                    const newScale = Math.max(0.1, Math.min(prev.scale * scaleRatio, 10));
+                    // Incremental update to keep the point under the fingers stable
+                    // Effective scale ratio based on previous frame's scale
+                    const effectiveScaleRatio = newScale / prev.scale;
+
+                    const newX = newMidPoint.x - (oldMidPoint.x - prev.x) * effectiveScaleRatio;
+                    const newY = newMidPoint.y - (oldMidPoint.y - prev.y) * effectiveScaleRatio;
+
+                    return {
+                        scale: newScale,
+                        x: newX,
+                        y: newY
+                    };
+                });
+            }
+
+            // Update ref for next frame
+            pinchStartRef.current = {
+                distance: newDistance,
+                transform: { ...transform },
+                midPointScreen: newMidPoint
+            };
+            return;
+        }
+
+        if (!isDrawing) {
+            const isPanActive = isPanningMode || selectedTool === 'hand';
+            if (selectedTool === 'select' && !isPanActive) {
+                const { x, y } = getTransformedMousePos(e);
+                const selectedItemIfOne = selectedItemIds.length === 1 ? items.find(i => i.id === selectedItemIds[0]) : null;
+                if (selectedItemIfOne?.type === 'text') {
+                    const handle = getResizeHandleAtPos(x, y, selectedItemIfOne);
+                    if (handle) {
+                        canvas.style.cursor = (handle === 'top-left' || handle === 'bottom-right') ? 'nwse-resize' : 'nesw-resize';
+                        return;
+                    }
+                }
+                const item = getItemAtPos(x, y);
+                canvas.style.cursor = item ? 'grab' : 'default';
+            }
+            return;
+        }
+
+        const isPanActive = isPanningMode || selectedTool === 'hand';
+        if (isPanActive) {
+            const { x, y } = getMousePos(e);
+            const now = Date.now();
+            const dt = now - (lastMoveTimeRef.current || now);
+
+            const dx = x - lastMousePosRef.current.x;
+            const dy = y - lastMousePosRef.current.y;
+
+            if (dt > 0) {
+                const vx = dx / dt * 16.67; // Velocity in pixels per frame (assuming 60fps)
+                const vy = dy / dt * 16.67;
+                velocityRef.current.x = velocityRef.current.x * 0.8 + vx * 0.2; // Smoothed velocity
+                velocityRef.current.y = velocityRef.current.y * 0.8 + vy * 0.2;
+            }
+
+            lastMousePosRef.current = { x, y };
+            lastMoveTimeRef.current = now;
+            setTransform(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+            return;
+        }
+
+        const { x, y } = getTransformedMousePos(e);
+
+        if (selectedTool === 'eraser' && isDrawing) {
+            if (isPartialErasing) {
+                setEraserPath(prev => prev ? [...prev, { x, y }] : null);
+            } else {
+                const prevPos = eraserLastPosRef.current;
+                if (prevPos) {
+                    const newErasedIds = new Set<string>();
+                    items.forEach(item => {
+                        if ((item.type === 'image' && item.isPdfPage) || erasedDuringDraw.has(item.id)) return;
+
+                        const bb = getBoundingBox(item);
+                        if (lineSegmentIntersectsAABB({ x: prevPos.x, y: prevPos.y }, { x, y }, bb)) {
+                            newErasedIds.add(item.id);
+                        }
+                    });
+
+                    if (newErasedIds.size > 0) {
+                        setErasedDuringDraw(prev => {
+                            const updatedSet = new Set(prev);
+                            newErasedIds.forEach(id => updatedSet.add(id));
+                            return updatedSet;
+                        });
+                    }
+                }
+                eraserLastPosRef.current = { x, y };
+            }
+            return;
+        }
+
+        if (marquee) {
+            setMarquee(prev => prev ? { ...prev, x2: x, y2: y } : null);
+            return;
+        }
+
+        if (resizingItem) {
+            const { originalItem, startX } = resizingItem;
+            const centerX = originalItem.x + originalItem.width / 2;
+            const centerY = originalItem.y + originalItem.height / 2;
+
+            const originalDist = Math.sqrt(Math.pow(startX - centerX, 2) + Math.pow(resizingItem.startY - centerY, 2));
+            const currentDist = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+            const scaleFactor = originalDist > 0 ? currentDist / originalDist : 1;
+
+            let newFontSize = Math.round(originalItem.fontSize * scaleFactor);
+            newFontSize = Math.max(8, Math.min(newFontSize, 512));
+
+            if (newFontSize !== resizingItem.item.fontSize) {
+                const ctx = getCanvasContext();
+                if (!ctx) return;
+                const { width, height } = measureMultilineText(ctx, { ...originalItem, fontSize: newFontSize });
+                const newX = centerX - width / 2;
+                const newY = centerY - height / 2;
+                const updatedItem: TextItem = { ...resizingItem.originalItem, fontSize: newFontSize, width, height, x: newX, y: newY };
+                setResizingItem(prev => prev ? { ...prev, item: updatedItem } : null);
+            }
+        } else if (draggedState) {
+            setDraggedState(prev => prev ? { ...prev, currentMousePos: { x, y } } : null);
+        } else if (currentItem) {
+            const isShiftPressed = 'shiftKey' in e && e.shiftKey;
+            const isAltPressed = 'altKey' in e && e.altKey;
+
+            if (currentItem.type === 'path') {
+                if (isShiftPressed) {
+                    const startPoint = currentItem.points[0];
+                    if (isAltPressed) {
+                        // Alt + Shift: simple straight line
+                        setCurrentItem({ ...currentItem, points: [startPoint, { x, y }] });
+                    } else {
+                        // Shift only: angle snapping
+                        const dx = x - startPoint.x;
+                        const dy = y - startPoint.y;
+
+                        if (dx === 0 && dy === 0) {
+                            setCurrentItem({ ...currentItem, points: [startPoint, { x, y }] });
+                            return;
+                        }
+
+                        const angle = Math.atan2(dy, dx);
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        // Snap to the closest angle among multiples of 30 and 45 degrees
+                        const snapAngle45 = Math.PI / 4;
+                        const snapAngle30 = Math.PI / 6;
+
+                        const snappedTo45 = Math.round(angle / snapAngle45) * snapAngle45;
+                        const snappedTo30 = Math.round(angle / snapAngle30) * snapAngle30;
+
+                        const diff45 = Math.abs(angle - snappedTo45);
+                        const diff30 = Math.abs(angle - snappedTo30);
+
+                        const finalAngle = diff30 < diff45 ? snappedTo30 : snappedTo45;
+
+                        const snappedX = startPoint.x + dist * Math.cos(finalAngle);
+                        const snappedY = startPoint.y + dist * Math.sin(finalAngle);
+
+                        setCurrentItem({ ...currentItem, points: [startPoint, { x: snappedX, y: snappedY }] });
+                    }
+                } else {
+                    // No Shift: freeform drawing
+                    const lastPoint = currentItem.points[currentItem.points.length - 1];
+                    const dist = Math.sqrt(Math.pow(x - lastPoint.x, 2) + Math.pow(y - lastPoint.y, 2));
+
+                    // Throttle points to avoid jitter and reduce data points
+                    if (dist > 2) {
+                        setCurrentItem({ ...currentItem, points: [...currentItem.points, { x, y }] });
+                    }
+                }
+            } else if (currentItem.type === 'shape') {
+                let width = x - currentItem.x;
+                let height = y - currentItem.y;
+
+                if (isShiftPressed) {
+                    // Constrain to a perfect shape (e.g., square or circle)
+                    const maxDim = Math.max(Math.abs(width), Math.abs(height));
+                    width = Math.sign(width) * maxDim;
+                    height = Math.sign(height) * maxDim;
+                }
+                setCurrentItem({ ...currentItem, width, height });
+            }
+        }
+    };
+
+    const handlePointerUp = (e: React.MouseEvent | React.TouchEvent) => {
+        // Check pinch end
+        if (pinchStartRef.current && (!('touches' in e) || e.touches.length < 2)) {
+            pinchStartRef.current = null;
+            // Don't trigger other up logic immediately after zoom
+            return;
+        }
+
+        const wasPanning = isDrawing && (isPanningMode || selectedTool === 'hand');
+
+        // Check for pause before release to stop inertia
+        const PAUSE_THRESHOLD = 100; // ms
+        const timeSinceLastMove = Date.now() - (lastMoveTimeRef.current || 0);
+
+        if (wasPanning && timeSinceLastMove > PAUSE_THRESHOLD) {
+            velocityRef.current = { x: 0, y: 0 };
+        }
+
+        if (selectedTool === 'eraser' && isPartialErasing && eraserPath && eraserPath.length > 1) {
+            const ERASE_RADIUS = (toolOptions.strokeWidth / 2) / transform.scale;
+
+            const modifiedItems: { [id: string]: PathItem[] } = {};
+            const itemsToDelete = new Set<string>();
+
+            items.forEach(item => {
+                if (item.type !== 'path') return;
+
+                const newSegments: { x: number, y: number }[][] = [];
+                let currentSegment: { x: number, y: number }[] = [];
+
+                item.points.forEach(point => {
+                    let isPointErased = false;
+                    for (const eraserPoint of eraserPath) {
+                        const distSq = (point.x - eraserPoint.x) ** 2 + (point.y - eraserPoint.y) ** 2;
+                        if (distSq < ERASE_RADIUS ** 2) {
+                            isPointErased = true;
+                            break;
+                        }
+                    }
+
+                    if (isPointErased) {
+                        if (currentSegment.length > 1) {
+                            newSegments.push(currentSegment);
+                        }
+                        currentSegment = [];
+                    } else {
+                        currentSegment.push(point);
+                    }
+                });
+
+                if (currentSegment.length > 1) {
+                    newSegments.push(currentSegment);
+                }
+
+                if (newSegments.length !== 1 || newSegments[0].length !== item.points.length) {
+                    itemsToDelete.add(item.id);
+                    modifiedItems[item.id] = newSegments.map(points => ({
+                        ...item,
+                        id: generateId(),
+                        points,
+                        x: points[0].x,
+                        y: points[0].y,
+                    }));
+                }
+            });
+
+            if (itemsToDelete.size > 0) {
+                setItems(prev => {
+                    const remaining = prev.filter(i => !itemsToDelete.has(i.id));
+                    const newPathItems = Object.values(modifiedItems).flat();
+                    return [...remaining, ...newPathItems];
+                });
+            }
+        }
+        setIsPartialErasing(false);
+        setEraserPath(null);
+        eraserLastPosRef.current = null;
+
+
+        if (marquee) {
+            const { x1, y1, x2, y2 } = marquee;
+            const minX = Math.min(x1, x2);
+            const maxX = Math.max(x1, x2);
+            const minY = Math.min(y1, y2);
+            const maxY = Math.max(y1, y2);
+
+            if (Math.abs(x1 - x2) > 5 || Math.abs(y1 - y2) > 5) { // Only select if marquee is big enough
+                const selectedIds = items.filter(item => {
+                    if (!item.visible) return false;
+                    const bb = getBoundingBox(item);
+                    return bb.x < maxX && bb.x + bb.width > minX && bb.y < maxY && bb.y + bb.height > minY;
+                }).map(item => item.id);
+                setSelectedItemIds(selectedIds);
+            }
+            setMarquee(null);
+        }
+        if (resizingItem) {
+            setItems(prev => prev.map(i => i.id === resizingItem.item.id ? resizingItem.item : i));
+            setResizingItem(null);
+        }
+        if (draggedState) {
+            const { x: endX, y: endY } = getTransformedMousePos(e);
+            const dx = endX - draggedState.startMousePos.x;
+            const dy = endY - draggedState.startMousePos.y;
+
+            if (dx !== 0 || dy !== 0) {
+                setItems(prevItems => prevItems.map(item => {
+                    const initialPos = draggedState.initialItemPositions.get(item.id);
+                    if (initialPos) {
+                        return { ...item, x: initialPos.x + dx, y: initialPos.y + dy };
+                    }
+                    return item;
+                }));
+            }
+            setDraggedState(null);
+        }
+
+        if (erasedDuringDraw.size > 0) {
+            setItems(prev => prev.filter(i => !erasedDuringDraw.has(i.id)));
+            setErasedDuringDraw(new Set());
+        }
+
+        if (currentItem) {
+            const isQuickClick = currentItem.type === 'path' && currentItem.points.length < 3;
+            setItems(prevItems => {
+                const maxZIndex = prevItems.length > 0 ? Math.max(...prevItems.map(i => i.zIndex)) : -1;
+                let newItem: CanvasItem = { ...currentItem, zIndex: maxZIndex + 1 };
+
+                if (newItem.type === 'shape') {
+                    if (newItem.width < 0 || newItem.height < 0) {
+                        if (newItem.width < 0) { newItem.x += newItem.width; newItem.width = -newItem.width; }
+                        if (newItem.height < 0) { newItem.y += newItem.height; newItem.height = -newItem.height; }
+                    }
+                } else if (newItem.type === 'path') {
+                    let pathItem = newItem;
+                    if (pathItem.points.length === 1) {
+                        const point = pathItem.points[0];
+                        pathItem = { ...pathItem, points: [...pathItem.points, { x: point.x, y: point.y }] };
+                    }
+
+                    if (pathItem.points.length < 2) return prevItems;
+
+                    if (isQuickClick) {
+                        const p1 = pathItem.points[0];
+                        const p2 = pathItem.points[pathItem.points.length - 1];
+                        const dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+                        if (dist < 2) { // Threshold for a "dot"
+                            pathItem = { ...pathItem, points: [p1, { x: p1.x + 0.1, y: p1.y + 0.1 }] }; // Create a minimal dot
+                        }
+                    }
+                    newItem = pathItem;
+                }
+
+                const newItems = [...prevItems, newItem];
+                return newItems;
+            });
+            setCurrentItem(null);
+        }
+
+        setIsDrawing(false);
+
+        if (wasPanning) {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+
+            const INERTIA_VELOCITY_THRESHOLD = 5; // pixels per frame
+            const INERTIA_FRICTION = 0.95;
+
+            if (Math.abs(velocityRef.current.x) > INERTIA_VELOCITY_THRESHOLD || Math.abs(velocityRef.current.y) > INERTIA_VELOCITY_THRESHOLD) {
+                const step = () => {
+                    if (!canvasRef.current) return;
+
+                    velocityRef.current.x *= INERTIA_FRICTION;
+                    velocityRef.current.y *= INERTIA_FRICTION;
+
+                    setTransform(prev => ({
+                        ...prev,
+                        x: prev.x + velocityRef.current.x,
+                        y: prev.y + velocityRef.current.y
+                    }));
+
+                    if (Math.abs(velocityRef.current.x) > 0.5 || Math.abs(velocityRef.current.y) > 0.5) {
+                        animationFrameRef.current = requestAnimationFrame(step);
+                    } else {
+                        velocityRef.current = { x: 0, y: 0 };
+                        animationFrameRef.current = null;
+                    }
+                };
+                animationFrameRef.current = requestAnimationFrame(step);
+            }
+        }
+    };
+
+    // Add Zoom support via Wheel
+    const handleWheel = (e: React.WheelEvent) => {
+        if (e.ctrlKey || e.metaKey) {
+            // Prevent default browser zoom if possible (requires passive: false in real listener)
+            // For React onWheel, we handle logic here.
+
+            // However, React event handlers are passive by default.
+            // We handle the visual zoom update:
+            const { x: mouseX, y: mouseY } = getMousePos(e);
+            const delta = -e.deltaY;
+            const zoomFactor = 0.001;
+            const newScale = transform.scale * (1 + delta * zoomFactor);
+            const clampedScale = Math.max(0.1, Math.min(newScale, 10));
+
+            const scaleRatio = clampedScale / transform.scale;
+            const newX = mouseX - (mouseX - transform.x) * scaleRatio;
+            const newY = mouseY - (mouseY - transform.y) * scaleRatio;
+
+            setTransform({ scale: clampedScale, x: newX, y: newY });
+        } else {
+            // Pan
+            setTransform(prev => ({
+                ...prev,
+                x: prev.x - e.deltaX,
+                y: prev.y - e.deltaY
             }));
         }
-        setDraggedState(null);
-    }
-    
-    if (erasedDuringDraw.size > 0) {
-        setItems(prev => prev.filter(i => !erasedDuringDraw.has(i.id)));
-        setErasedDuringDraw(new Set());
-    }
+    };
 
-    if (currentItem) {
-      const isQuickClick = currentItem.type === 'path' && currentItem.points.length < 3;
-      setItems(prevItems => {
-          const maxZIndex = prevItems.length > 0 ? Math.max(...prevItems.map(i => i.zIndex)) : -1;
-          let newItem: CanvasItem = { ...currentItem, zIndex: maxZIndex + 1 };
-          
-          if (newItem.type === 'shape') {
-              if (newItem.width < 0 || newItem.height < 0) {
-                if (newItem.width < 0) { newItem.x += newItem.width; newItem.width = -newItem.width; }
-                if (newItem.height < 0) { newItem.y += newItem.height; newItem.height = -newItem.height; }
-              }
-          } else if (newItem.type === 'path') {
-              let pathItem = newItem;
-              if (pathItem.points.length === 1) {
-                  const point = pathItem.points[0];
-                  pathItem = { ...pathItem, points: [...pathItem.points, { x: point.x, y: point.y }] };
-              }
-    
-              if (pathItem.points.length < 2) return prevItems;
-              
-              if (isQuickClick) {
-                  const p1 = pathItem.points[0];
-                  const p2 = pathItem.points[pathItem.points.length - 1];
-                  const dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-                  if (dist < 2) { // Threshold for a "dot"
-                      pathItem = { ...pathItem, points: [p1, { x: p1.x + 0.1, y: p1.y + 0.1 }] }; // Create a minimal dot
-                  }
-              }
-              newItem = pathItem;
-          }
-          
-          const newItems = [...prevItems, newItem];
-          return newItems;
-      });
-      setCurrentItem(null);
-    }
-
-    setIsDrawing(false);
-
-    if (wasPanning) {
+    // Prevent default browser zoom behavior
+    useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const INERTIA_VELOCITY_THRESHOLD = 5; // pixels per frame
-        const INERTIA_FRICTION = 0.95;
+        const preventDefault = (e: WheelEvent) => {
+            if (e.ctrlKey || e.metaKey) e.preventDefault();
+        };
 
-        if (Math.abs(velocityRef.current.x) > INERTIA_VELOCITY_THRESHOLD || Math.abs(velocityRef.current.y) > INERTIA_VELOCITY_THRESHOLD) {
-            const step = () => {
-                if (!canvasRef.current) return;
-                
-                velocityRef.current.x *= INERTIA_FRICTION;
-                velocityRef.current.y *= INERTIA_FRICTION;
-                
-                setTransform(prev => ({
-                    ...prev,
-                    x: prev.x + velocityRef.current.x,
-                    y: prev.y + velocityRef.current.y
-                }));
-                
-                if (Math.abs(velocityRef.current.x) > 0.5 || Math.abs(velocityRef.current.y) > 0.5) {
-                    animationFrameRef.current = requestAnimationFrame(step);
-                } else {
-                    velocityRef.current = { x: 0, y: 0 };
-                    animationFrameRef.current = null;
+        canvas.addEventListener('wheel', preventDefault, { passive: false });
+        return () => canvas.removeEventListener('wheel', preventDefault);
+    }, []);
+
+
+    const handleTextEditBlur = () => {
+        if (editingText.item) {
+            const text = textInputRef.current?.value.trim();
+            if (text) {
+                const ctx = getCanvasContext();
+                if (ctx) {
+                    const { width, height } = measureMultilineText(ctx, { ...editingText.item, text });
+                    const updatedItem = { ...editingText.item, text, width, height };
+                    if (editingText.isNew) {
+                        setItems(prev => {
+                            const maxZIndex = prev.length > 0 ? Math.max(...prev.map(i => i.zIndex)) : -1;
+                            return [...prev, { ...updatedItem, zIndex: maxZIndex + 1 }];
+                        });
+                    } else {
+                        setItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i));
+                    }
                 }
-            };
-            animationFrameRef.current = requestAnimationFrame(step);
-        }
-    }
-  };
-
-  // Add Zoom support via Wheel
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-        // Prevent default browser zoom if possible (requires passive: false in real listener)
-        // For React onWheel, we handle logic here.
-        
-        // However, React event handlers are passive by default.
-        // We handle the visual zoom update:
-        const { x: mouseX, y: mouseY } = getMousePos(e);
-        const delta = -e.deltaY;
-        const zoomFactor = 0.001;
-        const newScale = transform.scale * (1 + delta * zoomFactor);
-        const clampedScale = Math.max(0.1, Math.min(newScale, 10));
-        
-        const scaleRatio = clampedScale / transform.scale;
-        const newX = mouseX - (mouseX - transform.x) * scaleRatio;
-        const newY = mouseY - (mouseY - transform.y) * scaleRatio;
-
-        setTransform({ scale: clampedScale, x: newX, y: newY });
-    } else {
-        // Pan
-        setTransform(prev => ({
-            ...prev,
-            x: prev.x - e.deltaX,
-            y: prev.y - e.deltaY
-        }));
-    }
-  };
-  
-  // Prevent default browser zoom behavior
-  useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      
-      const preventDefault = (e: WheelEvent) => {
-          if (e.ctrlKey || e.metaKey) e.preventDefault();
-      };
-      
-      canvas.addEventListener('wheel', preventDefault, { passive: false });
-      return () => canvas.removeEventListener('wheel', preventDefault);
-  }, []);
-
-
-  const handleTextEditBlur = () => {
-    if (editingText.item) {
-        const text = textInputRef.current?.value.trim();
-        if (text) {
-            const ctx = getCanvasContext();
-            if (ctx) {
-                 const { width, height } = measureMultilineText(ctx, { ...editingText.item, text });
-                 const updatedItem = { ...editingText.item, text, width, height };
-                 if (editingText.isNew) {
-                     setItems(prev => {
-                         const maxZIndex = prev.length > 0 ? Math.max(...prev.map(i => i.zIndex)) : -1;
-                         return [...prev, { ...updatedItem, zIndex: maxZIndex + 1 }];
-                     });
-                 } else {
-                     setItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i));
-                 }
             }
         }
-    }
-    setEditingText({ item: null, isNew: false });
-  };
-
-  const handleTextEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Escape') {
         setEditingText({ item: null, isNew: false });
-    }
-    // Allow Shift+Enter for new lines, but Enter (without shift) could confirm if desired.
-    // For now, let's just rely on click-away (blur) or simple standard behavior.
-    // If we want Enter to finish editing:
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleTextEditBlur();
-    }
-  };
+    };
 
-  return (
-    <>
-        <canvas
-            ref={canvasRef}
-            onMouseDown={handlePointerDown}
-            onMouseMove={handlePointerMove}
-            onMouseUp={handlePointerUp}
-            onMouseLeave={handlePointerUp}
-            onWheel={handleWheel}
-            onTouchStart={handlePointerDown}
-            onTouchMove={handlePointerMove}
-            onTouchEnd={handlePointerUp}
-            style={{ touchAction: 'none', backgroundColor }}
-            className="absolute top-0 left-0 w-full h-full touch-none"
-        />
-        {editingText.item && (
-             <textarea
-                ref={textInputRef}
-                defaultValue={editingText.item.text}
-                onBlur={handleTextEditBlur}
-                onKeyDown={handleTextEditKeyDown}
-                style={{
-                    position: 'absolute',
-                    left: (editingText.item.x * transform.scale + transform.x) + 'px',
-                    top: (editingText.item.y * transform.scale + transform.y) + 'px',
-                    fontSize: (editingText.item.fontSize * transform.scale) + 'px',
-                    fontFamily: editingText.item.fontFamily,
-                    fontWeight: editingText.item.isBold ? 'bold' : 'normal',
-                    fontStyle: editingText.item.isItalic ? 'italic' : 'normal',
-                    color: editingText.item.color,
-                    background: 'rgba(255, 255, 255, 0.8)',
-                    border: '1px dashed #3B82F6',
-                    outline: 'none',
-                    padding: '0',
-                    margin: '0',
-                    resize: 'none',
-                    overflow: 'hidden',
-                    whiteSpace: 'pre',
-                    zIndex: 100,
-                    minWidth: '50px',
-                    minHeight: (editingText.item.fontSize * transform.scale * 1.2) + 'px'
-                }}
-                autoFocus
-             />
-        )}
-        
-        {/* Background & Grid Controls */}
-        <div className="absolute bottom-5 right-5 flex flex-col items-end gap-3 z-10 pointer-events-none">
-            
-            {/* Zoom Indicator */}
-            <button 
-                onClick={handleResetZoom}
-                className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-md border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 pointer-events-auto transition-transform active:scale-95 w-16 flex justify-center"
-                title="Reset Zoom to 100%"
-            >
-                {Math.round(transform.scale * 100)}%
-            </button>
+    const handleTextEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Escape') {
+            setEditingText({ item: null, isNew: false });
+        }
+        // Allow Shift+Enter for new lines, but Enter (without shift) could confirm if desired.
+        // For now, let's just rely on click-away (blur) or simple standard behavior.
+        // If we want Enter to finish editing:
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleTextEditBlur();
+        }
+    };
 
-            {/* Grid Control */}
-            <div 
-                className="relative pointer-events-auto flex items-center justify-end"
-                onMouseEnter={handleGridMouseEnter}
-                onMouseLeave={handleGridMouseLeave}
-            >
-                 {/* Slider Popup */}
-                 <div 
-                    className={`absolute right-12 mr-2 h-10 flex items-center bg-white/90 backdrop-blur px-3 rounded-lg shadow-md border border-gray-200 transition-all duration-200 origin-right ${showGridSlider ? 'opacity-100 scale-100 translate-x-0 visible' : 'opacity-0 scale-95 translate-x-4 invisible'}`}
-                 >
-                    <input 
-                        type="range" 
-                        min="0" 
-                        max="1" 
-                        step="0.05" 
-                        value={gridOpacity} 
-                        onChange={(e) => setGridOpacity(parseFloat(e.target.value))}
-                        className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                        title={`Grid Opacity: ${Math.round(gridOpacity * 100)}%`}
-                    />
-                 </div>
-
-                 <button 
-                    className={`w-10 h-10 flex items-center justify-center rounded-full shadow-md transition-colors border-2 ${gridOpacity > 0 ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-white text-gray-500 hover:bg-gray-100'}`}
-                    onClick={() => setGridOpacity(gridOpacity > 0 ? 0 : 0.2)}
-                    title="Toggle Grid"
-                 >
-                    <Icon name="grid" className="w-6 h-6" />
-                 </button>
-            </div>
-
-            {/* Background Color Toggle */}
-            <button 
-                className="w-10 h-10 rounded-full border-2 border-white shadow-md transition-transform hover:scale-110 ring-1 ring-gray-200 z-10 pointer-events-auto"
-                style={{backgroundColor: backgroundColor}}
-                onClick={() => {
-                    const currentIndex = backgroundColors.findIndex(c => c.color === backgroundColor);
-                    // Handle case where current color is not in the list (default to 0)
-                    const nextIndex = (currentIndex === -1) ? 0 : (currentIndex + 1) % backgroundColors.length;
-                    setBackgroundColor(backgroundColors[nextIndex].color);
-                }}
-                title="Click to toggle background color"
+    return (
+        <>
+            <canvas
+                ref={canvasRef}
+                onMouseDown={handlePointerDown}
+                onMouseMove={handlePointerMove}
+                onMouseUp={handlePointerUp}
+                onMouseLeave={handlePointerUp}
+                onWheel={handleWheel}
+                onTouchStart={handlePointerDown}
+                onTouchMove={handlePointerMove}
+                onTouchEnd={handlePointerUp}
+                style={{ touchAction: 'none', backgroundColor }}
+                className="absolute top-0 left-0 w-full h-full touch-none"
             />
-        </div>
-    </>
-  );
+            {editingText.item && (
+                <textarea
+                    ref={textInputRef}
+                    defaultValue={editingText.item.text}
+                    onBlur={handleTextEditBlur}
+                    onKeyDown={handleTextEditKeyDown}
+                    style={{
+                        position: 'absolute',
+                        left: (editingText.item.x * transform.scale + transform.x) + 'px',
+                        top: (editingText.item.y * transform.scale + transform.y) + 'px',
+                        fontSize: (editingText.item.fontSize * transform.scale) + 'px',
+                        fontFamily: editingText.item.fontFamily,
+                        fontWeight: editingText.item.isBold ? 'bold' : 'normal',
+                        fontStyle: editingText.item.isItalic ? 'italic' : 'normal',
+                        color: editingText.item.color,
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        border: '1px dashed #3B82F6',
+                        outline: 'none',
+                        padding: '0',
+                        margin: '0',
+                        resize: 'none',
+                        overflow: 'hidden',
+                        whiteSpace: 'pre',
+                        zIndex: 100,
+                        minWidth: '50px',
+                        minHeight: (editingText.item.fontSize * transform.scale * 1.2) + 'px'
+                    }}
+                    autoFocus
+                />
+            )}
+
+            {/* Background & Grid Controls */}
+            <div className="absolute bottom-5 right-5 flex flex-col items-end gap-3 z-10 pointer-events-none">
+
+                {/* Zoom Indicator */}
+                <button
+                    onClick={handleResetZoom}
+                    className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-md border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 pointer-events-auto transition-transform active:scale-95 w-16 flex justify-center"
+                    title="Reset Zoom to 100%"
+                >
+                    {Math.round(transform.scale * 100)}%
+                </button>
+
+                {/* Grid Control */}
+                <div
+                    className="relative pointer-events-auto flex items-center justify-end"
+                    onMouseEnter={handleGridMouseEnter}
+                    onMouseLeave={handleGridMouseLeave}
+                >
+                    {/* Slider Popup */}
+                    <div
+                        className={`absolute right-12 mr-2 h-10 flex items-center bg-white/90 backdrop-blur px-3 rounded-lg shadow-md border border-gray-200 transition-all duration-200 origin-right ${showGridSlider ? 'opacity-100 scale-100 translate-x-0 visible' : 'opacity-0 scale-95 translate-x-4 invisible'}`}
+                    >
+                        <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            value={gridOpacity}
+                            onChange={(e) => setGridOpacity(parseFloat(e.target.value))}
+                            className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                            title={`Grid Opacity: ${Math.round(gridOpacity * 100)}%`}
+                        />
+                    </div>
+
+                    <button
+                        className={`w-10 h-10 flex items-center justify-center rounded-full shadow-md transition-colors border-2 ${gridOpacity > 0 ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-white text-gray-500 hover:bg-gray-100'}`}
+                        onClick={() => setGridOpacity(gridOpacity > 0 ? 0 : 0.2)}
+                        title="Toggle Grid"
+                    >
+                        <Icon name="grid" className="w-6 h-6" />
+                    </button>
+                </div>
+
+                {/* Background Color Toggle */}
+                <button
+                    className="w-10 h-10 rounded-full border-2 border-white shadow-md transition-transform hover:scale-110 ring-1 ring-gray-200 z-10 pointer-events-auto"
+                    style={{ backgroundColor: backgroundColor }}
+                    onClick={() => {
+                        const currentIndex = backgroundColors.findIndex(c => c.color === backgroundColor);
+                        // Handle case where current color is not in the list (default to 0)
+                        const nextIndex = (currentIndex === -1) ? 0 : (currentIndex + 1) % backgroundColors.length;
+                        setBackgroundColor(backgroundColors[nextIndex].color);
+                    }}
+                    title="Click to toggle background color"
+                />
+            </div>
+        </>
+    );
 };
