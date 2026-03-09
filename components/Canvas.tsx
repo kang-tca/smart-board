@@ -1314,6 +1314,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
                 onPointerOut={handlePointerUp}
+                onWheel={handleWheel}
                 style={{ touchAction: 'none', backgroundColor }}
                 className="absolute top-0 left-0 w-full h-full touch-none"
             />
