@@ -779,26 +779,34 @@ const App: React.FC = () => {
                 const loadingTask = pdfjsLib.getDocument(URL.createObjectURL(file));
                 const pdf = await loadingTask.promise;
 
+                const pagePromises = [];
                 for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const viewport = page.getViewport({ scale: 1.5 });
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d', { willReadFrequently: true });
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
+                    pagePromises.push(async () => {
+                        const page = await pdf.getPage(i);
+                        const viewport = page.getViewport({ scale: 1.2 }); // Reduced scale slightly for performance
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d', { willReadFrequently: true });
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
 
-                    if (context) {
-                        await page.render({ canvasContext: context, viewport: viewport }).promise;
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        pagesForThisFile.push({
-                            type: 'image',
-                            width: viewport.width,
-                            height: viewport.height,
-                            dataUrl: dataUrl,
-                            isPdfPage: true,
-                        });
-                    }
+                        if (context) {
+                            await page.render({ canvasContext: context, viewport: viewport }).promise;
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // Reduced quality slightly for faster processing
+                            return {
+                                type: 'image' as const,
+                                width: viewport.width,
+                                height: viewport.height,
+                                dataUrl: dataUrl,
+                                isPdfPage: true,
+                            };
+                        }
+                        return null;
+                    });
                 }
+
+                // Execute all page renders concurrently
+                const results = await Promise.all(pagePromises.map(p => p()));
+                pagesForThisFile.push(...results.filter((res): res is NonNullable<typeof res> => res !== null));
                 if (pagesForThisFile.length > 0) {
                     allNewPagesByFile.push(pagesForThisFile);
                 }
