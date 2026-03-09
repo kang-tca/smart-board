@@ -642,6 +642,20 @@ const App: React.FC = () => {
                 if (items.length > 0) handleNewCanvas();
                 return;
             }
+            if (isCtrlOrMeta && key === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    if (canRedo) redo();
+                } else {
+                    if (canUndo) undo();
+                }
+                return;
+            }
+            if (isCtrlOrMeta && key === 'y') {
+                e.preventDefault();
+                if (canRedo) redo();
+                return;
+            }
 
             const toolMap: { [key: string]: Tool } = {
                 's': 'select',
@@ -696,7 +710,7 @@ const App: React.FC = () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
         };
-    }, [handleToolSelect, presentationState.item, handleExitPresentation, items, isProcessingCloud, handleNewCanvas, handleOpenLoadModal, handleOpenSaveModal, selectedTool, currentUser, currentFileId, saveName, isStudentMode]);
+    }, [handleToolSelect, presentationState.item, handleExitPresentation, items, isProcessingCloud, handleNewCanvas, handleOpenLoadModal, handleOpenSaveModal, selectedTool, currentUser, currentFileId, saveName, isStudentMode, undo, redo, canUndo, canRedo]);
 
     const handlePaste = useCallback(async (event: ClipboardEvent) => {
         const clipboardItems = event.clipboardData?.items;
