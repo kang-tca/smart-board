@@ -20,9 +20,9 @@ export interface Transform {
 }
 
 export interface SaveMetadata {
-    id: string;
-    name: string;
-    lastModified: number;
+  id: string;
+  name: string;
+  lastModified: number;
 }
 
 interface CanvasItemBase {
@@ -60,15 +60,15 @@ export interface ShapeItem extends CanvasItemBase {
 }
 
 export interface TextItem extends CanvasItemBase {
-    type: 'text';
-    text: string;
-    fontSize: number;
-    fontFamily: string;
-    color: string;
-    isBold: boolean;
-    isItalic: boolean;
-    width: number;
-    height: number;
+  type: 'text';
+  text: string;
+  fontSize: number;
+  fontFamily: string;
+  color: string;
+  isBold: boolean;
+  isItalic: boolean;
+  width: number;
+  height: number;
 }
 
 export interface StickerItem extends CanvasItemBase {
@@ -84,5 +84,12 @@ export interface TagItem extends CanvasItemBase {
   title: string;
 }
 
+export interface YoutubeItem extends CanvasItemBase {
+  type: 'youtube';
+  videoId: string;
+  width: number;
+  height: number;
+}
 
-export type CanvasItem = ImageItem | PathItem | ShapeItem | TextItem | StickerItem | TagItem;
+
+export type CanvasItem = ImageItem | PathItem | ShapeItem | TextItem | StickerItem | TagItem | YoutubeItem;

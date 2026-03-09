@@ -7,7 +7,7 @@ import { Canvas } from './components/Canvas';
 import { Toolbar } from './components/Toolbar';
 import { PresentationToolbar } from './components/PresentationToolbar';
 import { FileUploadButton } from './components/FileUploadButton';
-import { CanvasItem, Tool, ToolOptions, Transform, SaveMetadata, ImageItem, TagItem, StickerItem, TextItem } from './types';
+import { CanvasItem, Tool, ToolOptions, Transform, SaveMetadata, ImageItem, TagItem, StickerItem, TextItem, YoutubeItem } from './types';
 import { Icon } from './components/Icon';
 import { saveData, loadData, deleteData } from './lib/db';
 import { supabase } from './lib/supabase'; // Import Supabase Client
@@ -128,6 +128,7 @@ const App: React.FC = () => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [shareableLink, setShareableLink] = useState('');
     const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+    const [playingYoutubeId, setPlayingYoutubeId] = useState<string | null>(null);
     const [isProcessingCloud, setIsProcessingCloud] = useState<string | null>(null);
 
     const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -776,9 +777,46 @@ const App: React.FC = () => {
                     console.error("Error pasting image:", error);
                     setStatusMessage({ text: 'Failed to paste image.', type: 'error' });
                 }
-                break;
+                return; // Stop after handling image
             }
         }
+
+        // If not an image, check for Youtube link in text
+        const pastedText = event.clipboardData.getData('text');
+        if (pastedText) {
+            // Regex to extract video ID from various YouTube URL formats
+            const match = pastedText.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtube\.com\/v\/)([^\s&?]+)/);
+            if (match && match[1]) {
+                event.preventDefault();
+                const videoId = match[1];
+
+                const viewportCenterX = (window.innerWidth / 2 - transform.x) / transform.scale;
+                const viewportCenterY = (window.innerHeight / 2 - transform.y) / transform.scale;
+
+                // Typical High Quality Thumbnail is 480x360
+                const width = 480;
+                const height = 360;
+
+                const newYoutubeItem: YoutubeItem = {
+                    id: generateId(),
+                    type: 'youtube',
+                    videoId,
+                    width,
+                    height,
+                    x: viewportCenterX - width / 2,
+                    y: viewportCenterY - height / 2,
+                    zIndex: 0,
+                    visible: true,
+                };
+
+                setItems(currentItems => {
+                    const maxZIndex = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.zIndex)) : -1;
+                    return [...currentItems, { ...newYoutubeItem, zIndex: maxZIndex + 1 }];
+                });
+                setStatusMessage({ text: 'YouTube link pasted!', type: 'success' });
+            }
+        }
+
     }, [transform, setItems]);
 
     useEffect(() => {
@@ -1434,6 +1472,7 @@ const App: React.FC = () => {
                     presentationFitTransform={currentFitTransform}
                     gridOpacity={gridOpacity}
                     setGridOpacity={setGridOpacity}
+                    onYoutubePlay={setPlayingYoutubeId}
                 />
             </div>
 
@@ -1647,6 +1686,32 @@ const App: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* YouTube Playback Modal */}
+            {playingYoutubeId && (
+                <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[100]" onClick={() => setPlayingYoutubeId(null)}>
+                    <div className="relative w-[90vw] max-w-5xl aspect-video bg-black shadow-2xl rounded-xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <button
+                            className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 bg-black bg-opacity-50 rounded-full p-2"
+                            onClick={() => setPlayingYoutubeId(null)}
+                            title="Close Video"
+                        >
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <iframe
+                            className="w-full h-full"
+                            src={`https://www.youtube.com/embed/${playingYoutubeId}?autoplay=1`}
+                            title="YouTube video player"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allowFullScreen
+                        ></iframe>
                     </div>
                 </div>
             )}

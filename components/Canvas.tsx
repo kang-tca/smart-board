@@ -23,6 +23,7 @@ interface CanvasProps {
     presentationFitTransform: Transform | null;
     gridOpacity: number;
     setGridOpacity: (val: number) => void;
+    onYoutubePlay?: (videoId: string) => void;
 }
 
 const TAG_ICON_SIZE = 32; // in world units
@@ -132,13 +133,14 @@ const lineSegmentIntersectsAABB = (p1: { x: number, y: number }, p2: { x: number
     return false;
 };
 
-export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, toolOptions, transform, setTransform, selectedItemIds, setSelectedItemIds, undo, redo, backgroundColor, setBackgroundColor, backgroundColors, onEnterPresentation, isPresentationMode, presentationFitTransform, gridOpacity, setGridOpacity }) => {
+export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, toolOptions, transform, setTransform, selectedItemIds, setSelectedItemIds, undo, redo, backgroundColor, setBackgroundColor, backgroundColors, onEnterPresentation, isPresentationMode, presentationFitTransform, gridOpacity, setGridOpacity, onYoutubePlay }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const textInputRef = useRef<HTMLTextAreaElement>(null);
     const tagIconImageRef = useRef<HTMLImageElement | null>(null);
 
     // Track active pointers for multi-touch (pinch-zoom) with PointerEvents
     const activePointersRef = useRef<Map<number, { clientX: number, clientY: number }>>(new Map());
+    const lastTapRef = useRef<{ time: number, id: string | null }>({ time: 0, id: null });
 
     // Use a ref to keep track of the latest state variables needed in event listeners
     // This avoids stale closures without re-binding the event listeners on every render
@@ -244,6 +246,9 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         if (item.type === 'tag') {
             return { x: item.x - TAG_ICON_SIZE / 2, y: item.y - TAG_ICON_SIZE / 2, width: TAG_ICON_SIZE, height: TAG_ICON_SIZE };
         }
+        if (item.type === 'youtube') {
+            return { x: item.x, y: item.y, width: item.width, height: item.height };
+        }
         return { x: item.x, y: item.y, width: item.width, height: item.height };
     }
 
@@ -282,14 +287,38 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         switch (item.type) {
             case 'image':
             case 'sticker':
-                const img = imageCache.current.get(item.dataUrl);
+            case 'youtube':
+                const imgSource = item.type === 'youtube'
+                    ? `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`
+                    : item.dataUrl;
+
+                const img = imageCache.current.get(imgSource);
                 if (img) {
                     ctx.drawImage(img, item.x, item.y, item.width, item.height);
+                    if (item.type === 'youtube') {
+                        // Draw Play Button overlay
+                        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                        ctx.fillRect(item.x, item.y, item.width, item.height);
+                        ctx.fillStyle = '#FF0000';
+                        const px = item.x + item.width / 2;
+                        const py = item.y + item.height / 2;
+                        ctx.beginPath();
+                        ctx.arc(px, py, 30, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.beginPath();
+                        ctx.moveTo(px - 10, py - 15);
+                        ctx.lineTo(px + 15, py);
+                        ctx.lineTo(px - 10, py + 15);
+                        ctx.fill();
+                    }
                 } else {
                     const newImg = new Image();
-                    newImg.src = item.dataUrl;
+                    // crossOrigin is required for YouTube thumbnails to draw to canvas without tainting it for later save routines
+                    if (item.type === 'youtube') newImg.crossOrigin = "anonymous";
+                    newImg.src = imgSource;
                     newImg.onload = () => {
-                        imageCache.current.set(item.dataUrl, newImg);
+                        imageCache.current.set(imgSource, newImg);
                         setImagesLoaded(c => c + 1);
                     };
                 }
@@ -569,7 +598,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         for (const item of sortedItems) {
             if (!item.visible) continue;
 
-            if (item.type === 'image' || item.type === 'shape' || item.type === 'text' || item.type === 'sticker') {
+            if (item.type === 'image' || item.type === 'shape' || item.type === 'text' || item.type === 'sticker' || item.type === 'youtube') {
                 if (x >= item.x && x <= item.x + item.width && y >= item.y && y <= item.y + item.height) {
                     return item;
                 }
@@ -642,6 +671,20 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         if (editingText.item) return;
 
         const { x, y } = getTransformedMousePos(e);
+        const clickedItem = getItemAtPos(x, y);
+
+        // Check for double click on Youtube Items
+        if (selectedTool === 'select' && clickedItem?.type === 'youtube') {
+            const now = Date.now();
+            if (now - lastTapRef.current.time < 300 && lastTapRef.current.id === clickedItem.id) {
+                // Double tap detected
+                if (onYoutubePlay) {
+                    onYoutubePlay(clickedItem.videoId);
+                }
+                return;
+            }
+            lastTapRef.current = { time: now, id: clickedItem.id };
+        }
 
         const isPanActive = isPanningMode || selectedTool === 'hand';
         if (isPanActive) {
