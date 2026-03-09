@@ -618,6 +618,16 @@ const App: React.FC = () => {
                 return;
             }
 
+            // Handle deletion of selected items
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selectedItemIds.length > 0) {
+                    e.preventDefault();
+                    setItems(prev => prev.filter(item => !selectedItemIds.includes(item.id)));
+                    setSelectedItemIds([]);
+                    return;
+                }
+            }
+
             const key = e.key.toLowerCase();
             const isCtrlOrMeta = e.ctrlKey || e.metaKey;
 
