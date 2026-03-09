@@ -137,6 +137,9 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
     const textInputRef = useRef<HTMLTextAreaElement>(null);
     const tagIconImageRef = useRef<HTMLImageElement | null>(null);
 
+    // Track active pointers for multi-touch (pinch-zoom) with PointerEvents
+    const activePointersRef = useRef<Map<number, { clientX: number, clientY: number }>>(new Map());
+
     // Use a ref to keep track of the latest state variables needed in event listeners
     // This avoids stale closures without re-binding the event listeners on every render
     const latestStateRef = useRef({
@@ -548,17 +551,12 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
     }, [drawAll]);
 
 
-    const getMousePos = (e: MouseEvent | WheelEvent | React.MouseEvent | React.TouchEvent): { x: number; y: number } => {
+    const getMousePos = (e: React.PointerEvent | WheelEvent): { x: number; y: number } => {
         const rect = canvasRef.current!.getBoundingClientRect();
-        const touch = 'touches' in e && e.touches.length > 0
-            ? e.touches[0]
-            : ('changedTouches' in e && e.changedTouches.length > 0 ? e.changedTouches[0] : null);
-        const clientX = touch ? touch.clientX : (e as MouseEvent).clientX;
-        const clientY = touch ? touch.clientY : (e as MouseEvent).clientY;
-        return { x: clientX - rect.left, y: clientY - rect.top };
+        return { x: (e as any).clientX - rect.left, y: (e as any).clientY - rect.top };
     };
 
-    const getTransformedMousePos = (e: React.MouseEvent | React.TouchEvent | WheelEvent): { x: number; y: number } => {
+    const getTransformedMousePos = (e: React.PointerEvent | WheelEvent): { x: number; y: number } => {
         const { x: mouseX, y: mouseY } = getMousePos(e);
         return {
             x: (mouseX - transform.x) / transform.scale,
@@ -997,12 +995,24 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                     }
                 } else {
                     // No Shift: freeform drawing
-                    const lastPoint = currentItem.points[currentItem.points.length - 1];
-                    const dist = Math.sqrt(Math.pow(x - lastPoint.x, 2) + Math.pow(y - lastPoint.y, 2));
+                    const newPoints: { x: number, y: number }[] = [];
 
-                    // Throttle points to avoid jitter and reduce data points
-                    if (dist > 2) {
-                        setCurrentItem({ ...currentItem, points: [...currentItem.points, { x, y }] });
+                    // Extract high-frequency coalesced points if available for smoother drawing
+                    if (typeof (e.nativeEvent as any).getCoalescedEvents === 'function') {
+                        const coalescedEvents = (e.nativeEvent as any).getCoalescedEvents() as PointerEvent[];
+                        for (const ce of coalescedEvents) {
+                            const rect = canvasRef.current!.getBoundingClientRect();
+                            const cx = (ce.clientX - rect.left - transform.x) / transform.scale;
+                            const cy = (ce.clientY - rect.top - transform.y) / transform.scale;
+                            newPoints.push({ x: cx, y: cy });
+                        }
+                    } else {
+                        newPoints.push({ x, y });
+                    }
+
+                    // For high-frequency points, we don't aggressively throttle by geometry since we want the finest details
+                    if (newPoints.length > 0) {
+                        setCurrentItem({ ...currentItem, points: [...currentItem.points, ...newPoints] });
                     }
                 }
             } else if (currentItem.type === 'shape') {
@@ -1010,7 +1020,6 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                 let height = y - currentItem.y;
 
                 if (isShiftPressed) {
-                    // Constrain to a perfect shape (e.g., square or circle)
                     const maxDim = Math.max(Math.abs(width), Math.abs(height));
                     width = Math.sign(width) * maxDim;
                     height = Math.sign(height) * maxDim;
@@ -1020,11 +1029,16 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         }
     };
 
-    const handlePointerUp = (e: React.MouseEvent | React.TouchEvent) => {
+    const handlePointerUp = (e: React.PointerEvent) => {
+        activePointersRef.current.delete(e.pointerId);
+
+        if (typeof (e.target as Element).releasePointerCapture === 'function') {
+            try { (e.target as Element).releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+        }
+
         // Check pinch end
-        if (pinchStartRef.current && (!('touches' in e) || e.touches.length < 2)) {
+        if (pinchStartRef.current && activePointersRef.current.size < 2) {
             pinchStartRef.current = null;
-            // Don't trigger other up logic immediately after zoom
             return;
         }
 
@@ -1295,14 +1309,11 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         <>
             <canvas
                 ref={canvasRef}
-                onMouseDown={handlePointerDown}
-                onMouseMove={handlePointerMove}
-                onMouseUp={handlePointerUp}
-                onMouseLeave={handlePointerUp}
-                onWheel={handleWheel}
-                onTouchStart={handlePointerDown}
-                onTouchMove={handlePointerMove}
-                onTouchEnd={handlePointerUp}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                onPointerOut={handlePointerUp}
                 style={{ touchAction: 'none', backgroundColor }}
                 className="absolute top-0 left-0 w-full h-full touch-none"
             />
