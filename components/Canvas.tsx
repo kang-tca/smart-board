@@ -857,6 +857,19 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                 }
                 const item = getItemAtPos(x, y);
                 canvas.style.cursor = item ? 'grab' : 'default';
+            } else if (!isPanActive) {
+                // Apply specific cursors for other tools
+                if (selectedTool === 'eraser') {
+                    canvas.style.cursor = 'cell'; // A crosshair-like cursor for eraser
+                } else if (['pen', 'highlighter', 'rectangle', 'circle', 'triangle', 'pentagon'].includes(selectedTool)) {
+                    canvas.style.cursor = 'crosshair'; // Drawing precision cursor
+                } else if (selectedTool === 'text') {
+                    canvas.style.cursor = 'text';
+                } else if (selectedTool === 'sticker' || selectedTool === 'tag') {
+                    canvas.style.cursor = 'copy';
+                } else {
+                    canvas.style.cursor = 'default';
+                }
             }
             return;
         }
