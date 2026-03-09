@@ -29,18 +29,18 @@ interface CanvasProps {
 const TAG_ICON_SIZE = 32; // in world units
 
 // Helper functions for touch geometry
-const getTouchDistance = (touches: React.TouchList) => {
-    const t1 = touches[0];
-    const t2 = touches[1];
-    return Math.sqrt(Math.pow(t2.clientX - t1.clientX, 2) + Math.pow(t2.clientY - t1.clientY, 2));
+const getPointersDistance = (pointers: { clientX: number, clientY: number }[]) => {
+    const p1 = pointers[0];
+    const p2 = pointers[1];
+    return Math.sqrt(Math.pow(p2.clientX - p1.clientX, 2) + Math.pow(p2.clientY - p1.clientY, 2));
 };
 
-const getTouchMidpoint = (touches: React.TouchList, rect: DOMRect) => {
-    const t1 = touches[0];
-    const t2 = touches[1];
+const getPointersMidpoint = (pointers: { clientX: number, clientY: number }[], rect: DOMRect) => {
+    const p1 = pointers[0];
+    const p2 = pointers[1];
     return {
-        x: (t1.clientX + t2.clientX) / 2 - rect.left,
-        y: (t1.clientY + t2.clientY) / 2 - rect.top
+        x: (p1.clientX + p2.clientX) / 2 - rect.left,
+        y: (p1.clientY + p2.clientY) / 2 - rect.top
     };
 };
 
@@ -643,19 +643,22 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         return null;
     };
 
-    const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
+    const handlePointerDown = (e: React.PointerEvent) => {
         if (animationFrameRef.current) {
             cancelAnimationFrame(animationFrameRef.current);
             animationFrameRef.current = null;
         }
 
+        activePointersRef.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+
         // Check for multi-touch (Pinch start)
-        if ('touches' in e && e.touches.length === 2) {
+        if (activePointersRef.current.size === 2) {
+            const pointers = Array.from(activePointersRef.current.values()) as { clientX: number, clientY: number }[];
             const rect = canvasRef.current!.getBoundingClientRect();
             pinchStartRef.current = {
-                distance: getTouchDistance(e.touches),
+                distance: getPointersDistance(pointers),
                 transform: { ...transform },
-                midPointScreen: getTouchMidpoint(e.touches, rect)
+                midPointScreen: getPointersMidpoint(pointers, rect)
             };
             // Cancel any single-finger actions
             setIsDrawing(false);
@@ -667,7 +670,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             return;
         }
 
-        if ('button' in e && e.button !== 0) return;
+        if (e.button !== 0 && e.pointerType === 'mouse') return;
         if (editingText.item) return;
 
         const { x, y } = getTransformedMousePos(e);
@@ -831,26 +834,30 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         }
     };
 
-    const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const handlePointerMove = (e: React.PointerEvent) => {
         const canvas = canvasRef.current;
         if (!canvas || editingText.item) return;
 
+        if (activePointersRef.current.has(e.pointerId)) {
+            activePointersRef.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+        }
+
         // Check for multi-touch (Pinch move)
-        if ('touches' in e && e.touches.length === 2) {
-            e.preventDefault(); // Prevent browser zoom
+        if (activePointersRef.current.size === 2) {
+            const pointers = Array.from(activePointersRef.current.values()) as { clientX: number, clientY: number }[];
             if (!pinchStartRef.current) {
                 const rect = canvasRef.current!.getBoundingClientRect();
                 pinchStartRef.current = {
-                    distance: getTouchDistance(e.touches),
+                    distance: getPointersDistance(pointers),
                     transform: { ...transform },
-                    midPointScreen: getTouchMidpoint(e.touches, rect)
+                    midPointScreen: getPointersMidpoint(pointers, rect)
                 };
                 return;
             }
 
             const rect = canvasRef.current!.getBoundingClientRect();
-            const newDistance = getTouchDistance(e.touches);
-            const newMidPoint = getTouchMidpoint(e.touches, rect);
+            const newDistance = getPointersDistance(pointers);
+            const newMidPoint = getPointersMidpoint(pointers, rect);
 
             const oldDistance = pinchStartRef.current.distance;
             const oldMidPoint = pinchStartRef.current.midPointScreen;
@@ -1178,7 +1185,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             setResizingItem(null);
         }
         if (draggedState) {
-            const { x: endX, y: endY } = getTransformedMousePos(e);
+            const { x: endX, y: endY } = getTransformedMousePos(e as React.PointerEvent | React.WheelEvent);
             const dx = endX - draggedState.startMousePos.x;
             const dy = endY - draggedState.startMousePos.y;
 
