@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from './Icon';
 import { saveData, loadData, deleteData } from '../lib/db';
+import { useTranslation } from 'react-i18next';
 
 const CHECKLIST_ITEMS_KEY = 'pdf-canvas-checklist-items';
 
@@ -18,13 +19,14 @@ const generateId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 };
 
 export const Checklist: React.FC<ChecklistProps> = ({ onClose }) => {
+  const { t } = useTranslation();
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [newItemText, setNewItemText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +50,7 @@ export const Checklist: React.FC<ChecklistProps> = ({ onClose }) => {
     if (isInitialMount.current) {
       return;
     }
-    
+
     // Save items to IndexedDB whenever they change
     if (items.length > 0) {
       saveData(CHECKLIST_ITEMS_KEY, items);
@@ -91,7 +93,7 @@ export const Checklist: React.FC<ChecklistProps> = ({ onClose }) => {
       <div className="flex justify-between items-center p-2 border-b">
         <h3 className="font-semibold text-gray-800 flex items-center gap-2">
           <Icon name="checklist" className="w-5 h-5" />
-          Checklist
+          {t('checklist.title')}
         </h3>
         <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200">
           <Icon name="exit" className="w-5 h-5 text-gray-600" />
@@ -114,7 +116,7 @@ export const Checklist: React.FC<ChecklistProps> = ({ onClose }) => {
                 <button
                   onClick={() => deleteItem(item.id)}
                   className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Delete item"
+                  title={t('checklist.delete')}
                 >
                   <Icon name="trash" className="w-4 h-4" />
                 </button>
@@ -122,7 +124,7 @@ export const Checklist: React.FC<ChecklistProps> = ({ onClose }) => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500 py-4 text-center">No tasks yet. Add one below.</p>
+          <p className="text-sm text-gray-500 py-4 text-center">{t('checklist.noTasks')}</p>
         )}
       </div>
       <div className="p-2 border-t flex items-center">
@@ -132,14 +134,14 @@ export const Checklist: React.FC<ChecklistProps> = ({ onClose }) => {
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Add a new task..."
+          placeholder={t('checklist.placeholder')}
           className="flex-grow bg-transparent border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
         />
         <button onClick={handleAddItem} className="ml-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-semibold">
-          Add
+          {t('checklist.add')}
         </button>
       </div>
-       <style>{`
+      <style>{`
         @keyframes fade-in-left {
             from { opacity: 0; transform: translateX(-10px); }
             to { opacity: 1; transform: translateX(0); }

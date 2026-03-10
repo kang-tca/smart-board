@@ -55,6 +55,30 @@ const resources = {
                 gridToggle: "Toggle Grid",
                 page: "Page",
                 fitScreen: "Fit to Screen"
+            },
+            profile: {
+                tooltip: "Profile Settings / Logout",
+                guest: "Guest"
+            },
+            checklist: {
+                title: "Checklist",
+                noTasks: "No tasks yet. Add one below.",
+                placeholder: "Add a new task...",
+                add: "Add",
+                delete: "Delete item"
+            },
+            timer: {
+                title: "Timer",
+                clickToEdit: "Click to edit time",
+                start: "Start",
+                pause: "Pause",
+                reset: "Reset",
+                full: "Full",
+                exit: "Exit",
+                close: "Close Timer"
+            },
+            calculator: {
+                title: "Calculator"
             }
         }
     },
@@ -109,6 +133,30 @@ const resources = {
                 gridToggle: "눈금자(그리드) 표시/숨기기",
                 page: "페이지",
                 fitScreen: "화면에 맞추기"
+            },
+            profile: {
+                tooltip: "프로필 설정 / 로그아웃",
+                guest: "게스트"
+            },
+            checklist: {
+                title: "체크리스트",
+                noTasks: "아직 할 일이 없습니다. 아래에 추가해 보세요.",
+                placeholder: "새로운 할 일 추가...",
+                add: "추가",
+                delete: "항목 삭제"
+            },
+            timer: {
+                title: "타이머",
+                clickToEdit: "클릭하여 시간 수정",
+                start: "시작",
+                pause: "일시정지",
+                reset: "초기화",
+                full: "전체화면",
+                exit: "나가기",
+                close: "타이머 닫기"
+            },
+            calculator: {
+                title: "계산기"
             }
         }
     },
@@ -163,6 +211,30 @@ const resources = {
                 gridToggle: "グリッドの切り替え",
                 page: "ページ",
                 fitScreen: "画面に合わせる"
+            },
+            profile: {
+                tooltip: "プロファイル設定 / ログアウト",
+                guest: "ゲスト"
+            },
+            checklist: {
+                title: "チェックリスト",
+                noTasks: "タスクはまだありません。以下に追加してください。",
+                placeholder: "新しいタスクを追加...",
+                add: "追加",
+                delete: "アイテムを削除"
+            },
+            timer: {
+                title: "タイマー",
+                clickToEdit: "クリックして時間を編集",
+                start: "開始",
+                pause: "一時停止",
+                reset: "リセット",
+                full: "全画面表示",
+                exit: "終了",
+                close: "タイマーを閉じる"
+            },
+            calculator: {
+                title: "電卓"
             }
         }
     }

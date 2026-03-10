@@ -1296,11 +1296,13 @@ const App: React.FC = () => {
                         <div className="flex items-center space-x-2 justify-start">
                             {/* Auth Button - Now on Left */}
                             <div className="relative group mr-2">
-                                <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 transition-colors" title={`Logged in as ${currentUser?.displayName || 'Guest'}\nClick to Logout`}>
+                                <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 transition-colors" title={`${currentUser?.displayName || t('profile.guest')}\n${t('profile.tooltip')}`}>
                                     {currentUser ? (
                                         <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-8 h-8 rounded-full border border-gray-300" />
                                     ) : (
-                                        <div className="w-8 h-8 rounded-full border border-gray-300 bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm">G</div>
+                                        <div className="w-8 h-8 rounded-full border border-gray-300 bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm">
+                                            <Icon name="user" className="w-5 h-5 text-gray-400" />
+                                        </div>
                                     )}
                                 </button>
                             </div>
@@ -1346,6 +1348,15 @@ const App: React.FC = () => {
 
                         {/* Right Controls */}
                         <div className="flex items-center space-x-2 justify-end">
+                            <button
+                                onClick={() => setIsSettingsOpen(true)}
+                                className="mr-2 p-1.5 text-gray-500 hover:bg-gray-200 rounded-full transition-colors flex items-center justify-center"
+                                title={t('settings.title')}
+                            >
+                                <Icon name="settings" className="w-5 h-5" />
+                            </button>
+
+                            <div className="w-px h-6 bg-gray-300 mr-2"></div>
                             {statusMessage && (
                                 <div className={`hidden lg:block text-sm px-3 py-1 rounded-md transition-opacity duration-300 ${statusMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                     {statusMessage.text}
