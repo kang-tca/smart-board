@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { compressData, decompressData, validateAndMigrateItems, generateId } from './lib/utils';
 import { useAuth } from './hooks/useAuth';
 import { useCloudStorage } from './hooks/useCloudStorage';
+import { useTranslation } from 'react-i18next';
 import { Canvas } from './components/Canvas';
 import { Toolbar } from './components/Toolbar';
 import { PresentationToolbar } from './components/PresentationToolbar';
@@ -90,6 +91,8 @@ const useHistory = <T,>(initialState: T) => {
 
 
 const App: React.FC = () => {
+    const { t, i18n } = useTranslation();
+
     // Check for Student Mode first
     const isStudentMode = new URLSearchParams(window.location.search).get('student') === 'true';
 
@@ -160,6 +163,7 @@ const App: React.FC = () => {
     const [autoSaveOpacity, setAutoSaveOpacity] = useState(0);
     const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
     const [isTimerOpen, setIsTimerOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isPresenterRaffleOpen, setIsPresenterRaffleOpen] = useState(false);
     const [isTagPanelVisible, setIsTagPanelVisible] = useState(false);
     const [isChecklistVisible, setIsChecklistVisible] = useState(false);
@@ -1046,6 +1050,10 @@ const App: React.FC = () => {
         setIsTagPanelVisible(false);
     };
 
+    const changeLanguage = (lng: string) => {
+        i18n.changeLanguage(lng);
+    };
+
     const handleUpdateTagTitle = (id: string, newTitle: string) => {
         setItems(currentItems =>
             currentItems.map(item => {
@@ -1189,9 +1197,9 @@ const App: React.FC = () => {
                             <Icon name="pen" className="w-12 h-12 text-blue-600" />
                         </div>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Smart Board</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('auth.title')}</h1>
                     <p className="text-gray-600 mb-8">
-                        Organize, annotate, and share your PDF materials with an interactive digital whiteboard.
+                        {t('auth.subtitle')} {t('auth.with')}
                     </p>
                     {statusMessage && statusMessage.type === 'error' && (
                         <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-left text-sm text-red-700">
@@ -1210,7 +1218,7 @@ const App: React.FC = () => {
 
                     <form onSubmit={handleAuth} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 text-left mb-1">Email</label>
+                            <label className="block text-sm font-medium text-gray-700 text-left mb-1">{t('auth.email')}</label>
                             <input
                                 type="email"
                                 value={email}
@@ -1221,7 +1229,7 @@ const App: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 text-left mb-1">Password</label>
+                            <label className="block text-sm font-medium text-gray-700 text-left mb-1">{t('auth.password')}</label>
                             <input
                                 type="password"
                                 value={password}
@@ -1244,34 +1252,34 @@ const App: React.FC = () => {
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                             ) : null}
-                            <span className="font-semibold text-lg">{isLoginMode ? 'Sign In' : 'Sign Up'}</span>
+                            <span className="font-semibold text-lg">{isLoginMode ? t('auth.signIn') : t('auth.signUp')}</span>
                         </button>
                     </form>
 
                     <div className="mt-6 text-sm text-gray-600">
-                        {isLoginMode ? "Don't have an account? " : "Already have an account? "}
+                        {isLoginMode ? t('auth.noAccount') + " " : t('auth.hasAccount') + " "}
                         <button
                             type="button"
                             onClick={() => setIsLoginMode(!isLoginMode)}
                             className="text-blue-600 font-semibold hover:underline bg-transparent border-none p-0 cursor-pointer inline"
                         >
-                            {isLoginMode ? 'Sign up' : 'Sign in'}
+                            {isLoginMode ? t('auth.signUp') : t('auth.signIn')}
                         </button>
                     </div>
 
                     <div className="mt-4 text-center">
-                        <span className="text-gray-500 text-sm mr-2">Or just want to look around?</span>
+                        <span className="text-gray-500 text-sm mr-2">{t('auth.guestPrompt')}</span>
                         <button
                             type="button"
                             onClick={() => setIsGuest(true)}
                             className="text-gray-600 font-semibold hover:text-gray-900 underline decoration-gray-400 decoration-1 underline-offset-4 bg-transparent border-none p-0 cursor-pointer inline transition-colors"
                         >
-                            Continue as Guest
+                            {t('auth.continueGuest')}
                         </button>
                     </div>
 
                     <div className="mt-8 text-xs text-gray-400">
-                        <p>&copy; {new Date().getFullYear()} Smart Board. All rights reserved.</p>
+                        <p>&copy; {new Date().getFullYear()} {t('auth.rights')}</p>
                     </div>
                 </div>
             </div>
@@ -1299,16 +1307,16 @@ const App: React.FC = () => {
 
                             <div className="w-px h-6 bg-gray-300 mx-2"></div>
 
-                            <button onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)" className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors">
+                            <button onClick={undo} disabled={!canUndo} title={t('toolbar.undo')} className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors">
                                 <Icon name="undo" className="w-5 h-5" />
                             </button>
-                            <button onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)" className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors">
+                            <button onClick={redo} disabled={!canRedo} title={t('toolbar.redo')} className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors">
                                 <Icon name="redo" className="w-5 h-5" />
                             </button>
-                            <button onClick={() => handleEnterPresentation(singleSelectedItem as ImageItem)} disabled={!canPresent} title="Present Page" className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors">
+                            <button onClick={() => handleEnterPresentation(singleSelectedItem as ImageItem)} disabled={!canPresent} title={t('toolbar.present')} className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors">
                                 <Icon name="present" className="w-5 h-5" />
                             </button>
-                            <button onClick={handleNewCanvas} disabled={items.length === 0} title="New Canvas (Ctrl+N)" className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors">
+                            <button onClick={handleNewCanvas} disabled={items.length === 0} title={t('toolbar.newCanvas')} className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors">
                                 <Icon name="new-canvas" className="w-5 h-5" />
                             </button>
 
@@ -1347,7 +1355,7 @@ const App: React.FC = () => {
                             <div className="w-px h-6 bg-gray-300 mx-1"></div>
                             {/* Widgets moved back to right */}
                             <div className="relative flex items-center">
-                                <button onClick={() => setIsChecklistVisible(prev => !prev)} title="Checklist" className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 transition-colors">
+                                <button onClick={() => setIsChecklistVisible(prev => !prev)} title={t('toolbar.checklist')} className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 transition-colors">
                                     <Icon name="checklist" className="w-5 h-5" />
                                 </button>
                                 {/* Auto-save status attached to checklist/widgets area */}
@@ -1356,50 +1364,50 @@ const App: React.FC = () => {
                                 </div>
                             </div>
 
-                            <button onClick={() => setIsClassroomPanelOpen(prev => !prev)} title="Classroom" className={`p-2 rounded-lg shadow-md transition-colors ${isClassroomPanelOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}>
+                            <button onClick={() => setIsClassroomPanelOpen(prev => !prev)} title={t('toolbar.classroom')} className={`p-2 rounded-lg shadow-md transition-colors ${isClassroomPanelOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}>
                                 <Icon name="users" />
                             </button>
-                            <button onClick={() => setIsPresenterRaffleOpen(prev => !prev)} title="Presenter Raffle" className={`p-2 rounded-lg shadow-md transition-colors ${isPresenterRaffleOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}>
+                            <button onClick={() => setIsPresenterRaffleOpen(prev => !prev)} title={t('toolbar.raffle')} className={`p-2 rounded-lg shadow-md transition-colors ${isPresenterRaffleOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}>
                                 <Icon name="raffle" />
                             </button>
-                            <button onClick={() => setIsCalculatorOpen(prev => !prev)} title="Calculator" className={`p-2 rounded-lg shadow-md transition-colors ${isCalculatorOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}>
+                            <button onClick={() => setIsCalculatorOpen(prev => !prev)} title={t('toolbar.calculator')} className={`p-2 rounded-lg shadow-md transition-colors ${isCalculatorOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}>
                                 <Icon name="calculator" />
                             </button>
-                            <button onClick={() => setIsTimerOpen(prev => !prev)} title="Timer" className={`p-2 rounded-lg shadow-md transition-colors ${isTimerOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}>
+                            <button onClick={() => setIsTimerOpen(prev => !prev)} title={t('toolbar.timer')} className={`p-2 rounded-lg shadow-md transition-colors ${isTimerOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}>
                                 <Icon name="timer" />
                             </button>
 
                             <div className="w-px h-6 bg-gray-300"></div>
 
-                            <button onClick={handleClearCanvas} title="Clear Canvas" disabled={items.length === 0} className="p-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+                            <button onClick={handleClearCanvas} title={t('toolbar.clear')} disabled={items.length === 0} className="p-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
                                 <Icon name="trash" />
                             </button>
 
                             <div className="w-px h-6 bg-gray-300"></div>
 
-                            <button onClick={handleOpenSaveModal} disabled={!!isProcessingCloud} className="p-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed transition-colors" title="Save to Cloud (Ctrl+S)">
+                            <button onClick={handleOpenSaveModal} disabled={!!isProcessingCloud} className="p-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed transition-colors" title={t('toolbar.save')}>
                                 <Icon name="cloud-upload" />
                             </button>
-                            <button onClick={handleOpenLoadModal} disabled={!!isProcessingCloud} className="p-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors" title="Load from Cloud (Ctrl+L)">
+                            <button onClick={handleOpenLoadModal} disabled={!!isProcessingCloud} className="p-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors" title={t('toolbar.load')}>
                                 <Icon name="cloud-download" />
                             </button>
-                            <button onClick={handleOpenShareModal} disabled={items.length === 0} className="p-2 bg-purple-600 text-white rounded-lg shadow-md hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors" title="Share Canvas">
+                            <button onClick={handleOpenShareModal} disabled={items.length === 0} className="p-2 bg-purple-600 text-white rounded-lg shadow-md hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors" title={t('toolbar.share')}>
                                 <Icon name="share" />
                             </button>
 
                             <div className="w-px h-6 bg-gray-300"></div>
 
-                            <FileUploadButton onFileChange={handleFileChange} isLoading={isLoadingPdf} title="Upload PDF(s)" />
+                            <FileUploadButton onFileChange={handleFileChange} isLoading={isLoadingPdf} title={t('toolbar.upload')} />
                         </div>
                     </header>
 
                     {/* Mobile Header */}
                     <header className="flex md:hidden items-center justify-between p-2 bg-white shadow-md z-20">
                         <div className="flex items-center space-x-2">
-                            <h1 className="text-xl font-bold text-gray-800">Smart Board</h1>
+                            <h1 className="text-xl font-bold text-gray-800">{t('auth.title')}</h1>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <FileUploadButton onFileChange={handleFileChange} isLoading={isLoadingPdf} title="Upload PDF(s)" />
+                            <FileUploadButton onFileChange={handleFileChange} isLoading={isLoadingPdf} title={t('toolbar.upload')} />
                             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-gray-700 rounded-lg hover:bg-gray-100">
                                 <Icon name="menu" />
                             </button>
@@ -1407,6 +1415,61 @@ const App: React.FC = () => {
                     </header>
 
                     {isMobileMenuOpen && renderMobileMenu()}
+
+                    {/* Settings Modal */}
+                    {isSettingsOpen && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm m-4 animate-scale-in">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        <Icon name="settings" className="w-6 h-6 text-gray-600" />
+                                        {t('settings.title')}
+                                    </h2>
+                                    <button onClick={() => setIsSettingsOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                        <Icon name="exit" className="w-6 h-6" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.language')}</label>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            <button
+                                                onClick={() => changeLanguage('ko')}
+                                                className={`px-4 py-2 text-left rounded-lg border flex items-center justify-between transition-colors ${i18n.language.startsWith('ko') ? 'bg-blue-50 border-blue-500 text-blue-700' : 'hover:bg-gray-50 border-gray-200'}`}
+                                            >
+                                                <span>한국어</span>
+                                                {i18n.language.startsWith('ko') && <span className="text-blue-500">✓</span>}
+                                            </button>
+                                            <button
+                                                onClick={() => changeLanguage('en')}
+                                                className={`px-4 py-2 text-left rounded-lg border flex items-center justify-between transition-colors ${i18n.language.startsWith('en') ? 'bg-blue-50 border-blue-500 text-blue-700' : 'hover:bg-gray-50 border-gray-200'}`}
+                                            >
+                                                <span>English</span>
+                                                {i18n.language.startsWith('en') && <span className="text-blue-500">✓</span>}
+                                            </button>
+                                            <button
+                                                onClick={() => changeLanguage('ja')}
+                                                className={`px-4 py-2 text-left rounded-lg border flex items-center justify-between transition-colors ${i18n.language.startsWith('ja') ? 'bg-blue-50 border-blue-500 text-blue-700' : 'hover:bg-gray-50 border-gray-200'}`}
+                                            >
+                                                <span>日本語</span>
+                                                {i18n.language.startsWith('ja') && <span className="text-blue-500">✓</span>}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 flex justify-end">
+                                    <button
+                                        onClick={() => setIsSettingsOpen(false)}
+                                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors font-medium"
+                                    >
+                                        {t('settings.close')}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
             <div className="relative flex-grow overflow-hidden" ref={canvasWrapperRef}>
