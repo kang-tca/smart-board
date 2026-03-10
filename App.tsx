@@ -197,6 +197,7 @@ const App: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoginMode, setIsLoginMode] = useState(true);
+    const [isGuest, setIsGuest] = useState(false);
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -222,6 +223,10 @@ const App: React.FC = () => {
 
     const handleLogout = async () => {
         if (window.confirm('Are you sure you want to log out?')) {
+            if (isGuest) {
+                setIsGuest(false);
+                return;
+            }
             const { error } = await signOut();
             if (error) {
                 setStatusMessage({ text: `Logout failed: ${error.message}`, type: 'error' });
@@ -1254,6 +1259,17 @@ const App: React.FC = () => {
                         </button>
                     </div>
 
+                    <div className="mt-4 text-center">
+                        <span className="text-gray-500 text-sm mr-2">Or just want to look around?</span>
+                        <button
+                            type="button"
+                            onClick={() => setIsGuest(true)}
+                            className="text-gray-600 font-semibold hover:text-gray-900 underline decoration-gray-400 decoration-1 underline-offset-4 bg-transparent border-none p-0 cursor-pointer inline transition-colors"
+                        >
+                            Continue as Guest
+                        </button>
+                    </div>
+
                     <div className="mt-8 text-xs text-gray-400">
                         <p>&copy; {new Date().getFullYear()} Smart Board. All rights reserved.</p>
                     </div>
@@ -1272,8 +1288,12 @@ const App: React.FC = () => {
                         <div className="flex items-center space-x-2 justify-start">
                             {/* Auth Button - Now on Left */}
                             <div className="relative group mr-2">
-                                <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 transition-colors" title={`Logged in as ${currentUser.displayName}\nClick to Logout`}>
-                                    <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-8 h-8 rounded-full border border-gray-300" />
+                                <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 transition-colors" title={`Logged in as ${currentUser?.displayName || 'Guest'}\nClick to Logout`}>
+                                    {currentUser ? (
+                                        <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-8 h-8 rounded-full border border-gray-300" />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full border border-gray-300 bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm">G</div>
+                                    )}
                                 </button>
                             </div>
 
