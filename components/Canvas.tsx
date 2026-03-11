@@ -172,7 +172,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
     }, [transform, isPresentationMode, presentationFitTransform, items, selectedItemIds]);
 
     const [isDrawing, setIsDrawing] = useState(false); // Drawing, dragging, or panning
-    const [currentItem, setCurrentItem] = useState<CanvasItem | null>(null);
+    const [currentItems, setCurrentItems] = useState<Map<number, CanvasItem>>(new Map());
 
     const [draggedState, setDraggedState] = useState<{
         startMousePos: { x: number; y: number };
@@ -508,7 +508,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             drawItem(ctx, itemToDraw);
         });
 
-        if (currentItem) drawItem(ctx, currentItem);
+        currentItems.forEach(item => drawItem(ctx, item));
 
         if (eraserPath) {
             ctx.strokeStyle = '#888888';
@@ -555,7 +555,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         }
 
         ctx.restore();
-    }, [items, currentItem, getCanvasContext, drawItem, transform, selectedItemIds, draggedState, resizingItem, erasedDuringDraw, marquee, eraserPath, gridOpacity, backgroundColor]);
+    }, [items, currentItems, getCanvasContext, drawItem, transform, selectedItemIds, draggedState, resizingItem, erasedDuringDraw, marquee, eraserPath, gridOpacity, backgroundColor]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -665,8 +665,8 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             try { canvasRef.current.setPointerCapture(e.pointerId); } catch(err) {}
         }
 
-        // Check for multi-touch (Pinch start)
-        if (activePointersRef.current.size === 2) {
+        // Check for multi-touch (Pinch start) ONLY if tool is hand or select
+        if ((selectedTool === 'hand' || selectedTool === 'select') && activePointersRef.current.size === 2) {
             const pointers = Array.from(activePointersRef.current.values()) as { clientX: number, clientY: number }[];
             const activeIds = Array.from(activePointersRef.current.keys()).sort().join(',');
             const rect = canvasRef.current!.getBoundingClientRect();
@@ -679,7 +679,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             // Cancel any single-finger actions
             setIsDrawing(false);
             setDraggedState(null);
-            setCurrentItem(null);
+            setCurrentItems(new Map());
             setEraserPath(null);
             setMarquee(null);
             setResizingItem(null);
@@ -819,20 +819,28 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             setEditingText({ item: newTextItem, isNew: true });
         } else if (selectedTool === 'pen' || selectedTool === 'highlighter') {
             setIsDrawing(true);
-            setCurrentItem({
-                id: generateId(), type: 'path', x, y, points: [{ x, y }],
-                strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
-                isHighlighter: selectedTool === 'highlighter',
-                zIndex: 0, visible: true
-            } as PathItem);
+            setCurrentItems(prev => {
+                const newMap = new Map(prev);
+                newMap.set(e.pointerId, {
+                    id: generateId(), type: 'path', x, y, points: [{ x, y }],
+                    strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
+                    isHighlighter: selectedTool === 'highlighter',
+                    zIndex: 0, visible: true
+                } as PathItem);
+                return newMap;
+            });
         } else if (['rectangle', 'circle', 'triangle', 'pentagon'].includes(selectedTool)) {
             setIsDrawing(true);
-            setCurrentItem({
-                id: generateId(), type: 'shape', shape: selectedTool as ShapeType, x, y, width: 0, height: 0,
-                strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
-                fillColor: toolOptions.fillColor,
-                zIndex: 0, visible: true
-            } as ShapeItem);
+            setCurrentItems(prev => {
+                const newMap = new Map(prev);
+                newMap.set(e.pointerId, {
+                    id: generateId(), type: 'shape', shape: selectedTool as ShapeType, x, y, width: 0, height: 0,
+                    strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
+                    fillColor: toolOptions.fillColor,
+                    zIndex: 0, visible: true
+                } as ShapeItem);
+                return newMap;
+            });
         } else if (selectedTool === 'eraser') {
             setIsDrawing(true);
             const isCtrl = 'ctrlKey' in e && (e.ctrlKey || e.metaKey);
@@ -858,8 +866,8 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             activePointersRef.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
         }
 
-        // Check for multi-touch (Pinch move)
-        if (activePointersRef.current.size === 2) {
+        // Check for multi-touch (Pinch move) ONLY if tool is hand or select
+        if ((selectedTool === 'hand' || selectedTool === 'select') && activePointersRef.current.size === 2) {
             const pointers = Array.from(activePointersRef.current.values()) as { clientX: number, clientY: number }[];
             const activeIds = Array.from(activePointersRef.current.keys()).sort().join(',');
 
@@ -1027,23 +1035,32 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             }
         } else if (draggedState) {
             setDraggedState(prev => prev ? { ...prev, currentMousePos: { x, y } } : null);
-        } else if (currentItem) {
+        } else if (currentItems.has(e.pointerId)) {
+            const currentItem = currentItems.get(e.pointerId)!;
             const isShiftPressed = 'shiftKey' in e && e.shiftKey;
             const isAltPressed = 'altKey' in e && e.altKey;
 
             if (currentItem.type === 'path') {
                 if (isShiftPressed) {
-                    const startPoint = currentItem.points[0];
+                    const startPoint = (currentItem as PathItem).points[0];
                     if (isAltPressed) {
                         // Alt + Shift: simple straight line
-                        setCurrentItem({ ...currentItem, points: [startPoint, { x, y }] });
+                        setCurrentItems(prev => {
+                            const newMap = new Map(prev);
+                            newMap.set(e.pointerId, { ...currentItem, points: [startPoint, { x, y }] } as PathItem);
+                            return newMap;
+                        });
                     } else {
                         // Shift only: angle snapping
                         const dx = x - startPoint.x;
                         const dy = y - startPoint.y;
 
                         if (dx === 0 && dy === 0) {
-                            setCurrentItem({ ...currentItem, points: [startPoint, { x, y }] });
+                            setCurrentItems(prev => {
+                                const newMap = new Map(prev);
+                                newMap.set(e.pointerId, { ...currentItem, points: [startPoint, { x, y }] } as PathItem);
+                                return newMap;
+                            });
                             return;
                         }
 
@@ -1065,7 +1082,11 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                         const snappedX = startPoint.x + dist * Math.cos(finalAngle);
                         const snappedY = startPoint.y + dist * Math.sin(finalAngle);
 
-                        setCurrentItem({ ...currentItem, points: [startPoint, { x: snappedX, y: snappedY }] });
+                        setCurrentItems(prev => {
+                            const newMap = new Map(prev);
+                            newMap.set(e.pointerId, { ...currentItem, points: [startPoint, { x: snappedX, y: snappedY }] } as PathItem);
+                            return newMap;
+                        });
                     }
                 } else {
                     // No Shift: freeform drawing
@@ -1084,13 +1105,14 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                         } else {
                             newPoints.push({ x, y });
                         }
-                    } else {
-                        newPoints.push({ x, y });
                     }
 
-                    // For high-frequency points, we don't aggressively throttle by geometry since we want the finest details
                     if (newPoints.length > 0) {
-                        setCurrentItem({ ...currentItem, points: [...currentItem.points, ...newPoints] });
+                        setCurrentItems(prev => {
+                            const newMap = new Map(prev);
+                            newMap.set(e.pointerId, { ...currentItem, points: [...(currentItem as PathItem).points, ...newPoints] } as PathItem);
+                            return newMap;
+                        });
                     }
                 }
             } else if (currentItem.type === 'shape') {
@@ -1102,7 +1124,11 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                     width = Math.sign(width) * maxDim;
                     height = Math.sign(height) * maxDim;
                 }
-                setCurrentItem({ ...currentItem, width, height });
+                setCurrentItems(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(e.pointerId, { ...currentItem, width, height } as ShapeItem);
+                    return newMap;
+                });
             }
         }
     };
@@ -1234,11 +1260,13 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             setErasedDuringDraw(new Set());
         }
 
-        if (currentItem) {
-            const isQuickClick = currentItem.type === 'path' && currentItem.points.length < 3;
+        if (currentItems.has(e.pointerId)) {
+            const finishedItem = currentItems.get(e.pointerId)!;
+            const isQuickClick = finishedItem.type === 'path' && finishedItem.points.length < 3;
+            
             setItems(prevItems => {
                 const maxZIndex = prevItems.length > 0 ? Math.max(...prevItems.map(i => i.zIndex)) : -1;
-                let newItem: CanvasItem = { ...currentItem, zIndex: maxZIndex + 1 };
+                let newItem: CanvasItem = { ...finishedItem, zIndex: maxZIndex + 1 };
 
                 if (newItem.type === 'shape') {
                     if (newItem.width < 0 || newItem.height < 0) {
@@ -1268,10 +1296,15 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                 const newItems = [...prevItems, newItem];
                 return newItems;
             });
-            setCurrentItem(null);
+            
+            setCurrentItems(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(e.pointerId);
+                return newMap;
+            });
         }
 
-        setIsDrawing(false);
+        setIsDrawing(currentItems.size > 1); // Only fully stop drawing if this was the last active pointer
 
         if (wasPanning) {
             const canvas = canvasRef.current;
