@@ -214,6 +214,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         distance: number;
         transform: Transform;
         midPointScreen: { x: number; y: number };
+        activeIds: string;
     } | null>(null);
 
     // New state for Grid Slider visibility with delay
@@ -660,14 +661,20 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
 
         activePointersRef.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
 
+        if (canvasRef.current) {
+            try { canvasRef.current.setPointerCapture(e.pointerId); } catch(err) {}
+        }
+
         // Check for multi-touch (Pinch start)
         if (activePointersRef.current.size === 2) {
             const pointers = Array.from(activePointersRef.current.values()) as { clientX: number, clientY: number }[];
+            const activeIds = Array.from(activePointersRef.current.keys()).sort().join(',');
             const rect = canvasRef.current!.getBoundingClientRect();
             pinchStartRef.current = {
                 distance: getPointersDistance(pointers),
                 transform: { ...transform },
-                midPointScreen: getPointersMidpoint(pointers, rect)
+                midPointScreen: getPointersMidpoint(pointers, rect),
+                activeIds
             };
             // Cancel any single-finger actions
             setIsDrawing(false);
@@ -854,12 +861,15 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         // Check for multi-touch (Pinch move)
         if (activePointersRef.current.size === 2) {
             const pointers = Array.from(activePointersRef.current.values()) as { clientX: number, clientY: number }[];
-            if (!pinchStartRef.current) {
+            const activeIds = Array.from(activePointersRef.current.keys()).sort().join(',');
+
+            if (!pinchStartRef.current || pinchStartRef.current.activeIds !== activeIds) {
                 const rect = canvasRef.current!.getBoundingClientRect();
                 pinchStartRef.current = {
                     distance: getPointersDistance(pointers),
                     transform: { ...transform },
-                    midPointScreen: getPointersMidpoint(pointers, rect)
+                    midPointScreen: getPointersMidpoint(pointers, rect),
+                    activeIds
                 };
                 return;
             }
@@ -895,7 +905,8 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             pinchStartRef.current = {
                 distance: newDistance,
                 transform: { ...transform },
-                midPointScreen: newMidPoint
+                midPointScreen: newMidPoint,
+                activeIds
             };
             return;
         }
@@ -1063,11 +1074,15 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                     // Extract high-frequency coalesced points if available for smoother drawing
                     if (typeof (e.nativeEvent as any).getCoalescedEvents === 'function') {
                         const coalescedEvents = (e.nativeEvent as any).getCoalescedEvents() as PointerEvent[];
-                        for (const ce of coalescedEvents) {
-                            const rect = canvasRef.current!.getBoundingClientRect();
-                            const cx = (ce.clientX - rect.left - transform.x) / transform.scale;
-                            const cy = (ce.clientY - rect.top - transform.y) / transform.scale;
-                            newPoints.push({ x: cx, y: cy });
+                        if (coalescedEvents && coalescedEvents.length > 0) {
+                            for (const ce of coalescedEvents) {
+                                const rect = canvasRef.current!.getBoundingClientRect();
+                                const cx = (ce.clientX - rect.left - transform.x) / transform.scale;
+                                const cy = (ce.clientY - rect.top - transform.y) / transform.scale;
+                                newPoints.push({ x: cx, y: cy });
+                            }
+                        } else {
+                            newPoints.push({ x, y });
                         }
                     } else {
                         newPoints.push({ x, y });
