@@ -9,6 +9,8 @@ interface ToolbarProps {
   setSelectedTool: (tool: Tool) => void;
   toolOptions: ToolOptions;
   setToolOptions: React.Dispatch<React.SetStateAction<ToolOptions>>;
+  isMultiTouchEnabled: boolean;
+  setIsMultiTouchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const colors = ['#000000', '#FFFFFF', '#EF4444', '#3B82F6', '#22C55E', '#FBBF24', '#A855F7'];
@@ -136,6 +138,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   setSelectedTool,
   toolOptions,
   setToolOptions,
+  isMultiTouchEnabled,
+  setIsMultiTouchEnabled,
 }) => {
   const { t } = useTranslation();
   const [activeSubToolbar, setActiveSubToolbar] = useState<SubToolbarType>(null);
@@ -252,6 +256,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             isActive={selectedTool === 'sticker'}
             onClick={() => handleMainToolClick('sticker', 'sticker')}
           />
+          <div className="w-px h-8 bg-gray-200"></div>
+          <button
+            onClick={() => setIsMultiTouchEnabled(!isMultiTouchEnabled)}
+            title={isMultiTouchEnabled ? "Multi-touch Drawing: ON (Zoom Disabled)" : "Multi-touch Drawing: OFF (Zoom Enabled)"}
+            className={`p-2 rounded-md transition-colors ${isMultiTouchEnabled ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 text-gray-400'}`}
+          >
+            <Icon name="users" className="w-6 h-6" />
+          </button>
+          <div className="w-px h-8 bg-gray-200"></div>
           <ToolButton
             icon="tag"
             label="Tag"

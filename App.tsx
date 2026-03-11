@@ -138,6 +138,9 @@ const App: React.FC = () => {
 
     // Auth State using custom hook
     const { currentUser, isAuthReady, isLoginLoading, signIn, signUp, signOut } = useAuth();
+    
+    // Multi-touch Drawing Toggle
+    const [isMultiTouchEnabled, setIsMultiTouchEnabled] = useState(false);
 
     const {
         savesList,
@@ -1491,6 +1494,8 @@ const App: React.FC = () => {
                             setSelectedTool={handleToolSelect}
                             toolOptions={toolOptions}
                             setToolOptions={setToolOptions}
+                            isMultiTouchEnabled={isMultiTouchEnabled}
+                            setIsMultiTouchEnabled={setIsMultiTouchEnabled}
                         />
                         {isTagPanelVisible && tagItems.length > 0 && (
                             <TagPanel
@@ -1567,6 +1572,7 @@ const App: React.FC = () => {
                     gridOpacity={gridOpacity}
                     setGridOpacity={setGridOpacity}
                     onYoutubePlay={setPlayingYoutubeId}
+                    isMultiTouchEnabled={isMultiTouchEnabled}
                 />
             </div>
 
