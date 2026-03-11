@@ -1350,10 +1350,10 @@ const App: React.FC = () => {
                         <div className="flex items-center space-x-2 justify-end">
                             <button
                                 onClick={() => setIsSettingsOpen(true)}
-                                className="mr-2 p-1.5 text-gray-500 hover:bg-gray-200 rounded-full transition-colors flex items-center justify-center"
+                                className="mr-2 p-2 text-gray-500 hover:bg-gray-200 rounded-full transition-colors flex items-center justify-center"
                                 title={t('settings.title')}
                             >
-                                <Icon name="settings" className="w-5 h-5" />
+                                <Icon name="settings" className="w-6 h-6" />
                             </button>
 
                             <div className="w-px h-6 bg-gray-300 mr-2"></div>

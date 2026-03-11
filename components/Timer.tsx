@@ -172,8 +172,8 @@ export const Timer: React.FC<TimerProps> = ({ onClose }) => {
           />
         ) : (
           <span className={`font-mono tracking-wider ${isFullscreen
-              ? 'text-white text-[20vw] lg:text-[25rem] leading-none'
-              : 'text-6xl'
+            ? 'text-white text-[20vw] lg:text-[25rem] leading-none'
+            : 'text-6xl'
             } ${time === 0 && !isActive ? 'animate-pulse' : ''}`}
           >
             {formatTime(time)}
@@ -184,21 +184,21 @@ export const Timer: React.FC<TimerProps> = ({ onClose }) => {
       <div className={`grid grid-cols-3 gap-3 mt-4 w-full ${isFullscreen ? 'max-w-md' : ''}`}>
         <button
           onClick={handleStartPause}
-          className={`py-3 rounded-md text-white font-bold text-lg transition-colors ${isActive ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-600 hover:bg-green-700'}`}
+          className={`py-3 px-1 rounded-md text-white font-bold text-base sm:text-lg whitespace-nowrap transition-colors flex items-center justify-center ${isActive ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-600 hover:bg-green-700'}`}
         >
           {isActive ? t('timer.pause') : (time === 0 ? t('timer.start') : t('timer.start'))}
         </button>
         <button
           onClick={handleReset}
-          className="py-3 rounded-md bg-gray-500 hover:bg-gray-600 text-white font-bold text-lg transition-colors"
+          className="py-3 px-1 rounded-md bg-gray-500 hover:bg-gray-600 text-white font-bold text-base sm:text-lg whitespace-nowrap transition-colors flex items-center justify-center"
         >
           {t('timer.reset')}
         </button>
         <button
           onClick={toggleFullscreen}
-          className="py-3 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-bold text-lg transition-colors flex items-center justify-center gap-2"
+          className="py-3 px-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-bold text-base sm:text-lg whitespace-nowrap transition-colors flex items-center justify-center gap-1 sm:gap-2"
         >
-          <Icon name={isFullscreen ? "exit-fullscreen" : "fullscreen"} className="w-5 h-5" />
+          <Icon name={isFullscreen ? "exit-fullscreen" : "fullscreen"} className="w-4 h-4 sm:w-5 sm:h-5 hidden sm:block" />
           <span>{isFullscreen ? t('timer.exit') : t('timer.full')}</span>
         </button>
       </div>

@@ -76,6 +76,15 @@ const stickerSvgs: Record<StickerType, string> = {
     'love': `<svg id="_50" data-name="50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><style>.cls-4{fill:#fb626e}.cls-5{fill:#eea47d}.cls-7{fill:#f3c3b1}.cls-8{fill:#f5b890}</style></defs><circle cx="256" cy="256" r="256" style="fill:#f9eaa5"/><path d="M403 288.18 273.19 418a24.3 24.3 0 0 1-34.38 0L131.06 310.27 109 288.18a88.35 88.35 0 1 1 124.92-124.94l22.08 22.1 22.09-22.1A88.34 88.34 0 0 1 403 288.18z" style="fill:#e52e44"/><path d="M403 288.18 297.84 393.36a24.29 24.29 0 0 1-34.37 0L155.72 285.62l-22.09-22.09a88.36 88.36 0 0 1-11.1-111.4 88.4 88.4 0 0 1 111.39 11.11l22.08 22.1 22.09-22.1A88.34 88.34 0 0 1 403 288.18z" style="fill:#fa4654"/><ellipse class="cls-4" cx="368.47" cy="178.93" rx="22.41" ry="37.05" transform="rotate(-53.45 368.434 178.932)"/><ellipse class="cls-4" cx="403.74" cy="233.05" rx="14.16" ry="23.41" transform="rotate(-8.45 403.49 232.943)"/><path class="cls-5" d="M393.4 366.25a8.43 8.43 0 0 1-.66.71l-.25.25c-6.81 6.83-12.71 13.39-18 19.66-38.32 45.3-45.38 75.06-138.76 75.06-55.23 0-64.4 6.59-76 31.33-3.64-1.48-7.23-3-10.78-4.68a255 255 0 0 1-49.58-30.12q-6.4-4.95-12.48-10.31l48.34-48.33c63.75-63.74 84.9-50.57 96.35-50.57 6 0 14.93-5.47 22.17-10.73 6.69-4.84 11.9-9.5 11.9-9.5 3.62-3.62 7-5.55 9.92-6.19 8-1.74 13 6 12.09 14.83a22.42 22.42 0 0 1-6.56 13.62c-5.72 5.71-48.38 31-48.38 31h63.94c23.36 0 43.27-52.06 65.49-52.06 11.61 0 17.15 2.93 19.79 5.73a8 8 0 0 1 2.42 5l-2.6 3.05-.08.09-.31.38-.08.1-8.29 9.91h.31c1.91.13 12.07.92 17.81 3.69 3.66 1.83 5.51 4.36 2.28 8.08z"/><path d="m390.44 364.93-1.31-.53h-.06c-.73-.29-1.45-.56-2.14-.82l-.26-.1c-2.07-.75-3.84-1.32-5-1.7-5.74-1.95-13.28-1.14-13.28-1.14l4.7-5.85.21-.26 7.72-9.6.07-.1.18-.23.08-.1.31-.38c-.59-.47-1.33-1.08-2.2-1.65a12.18 12.18 0 0 0-2-1.09 9.35 9.35 0 0 0-3.65-.75c-22.21 0-45.86 56.55-69.22 56.55h-63.98s12.23-7.25 24.48-14.86h-32.41s42.66-25.26 48.38-31a22.42 22.42 0 0 0 6.56-13.62c-3.75-.85-8.61.74-14.09 6.22 0 0-22.62 20.23-34.07 20.23s-32.6-13.17-96.34 50.56l-43.79 43.75a255 255 0 0 0 49.58 30.12c3.55 1.65 7.14 3.2 10.78 4.68 11.63-24.74 20.8-31.33 76-31.33 93.38 0 100.44-29.76 138.76-75.06 5.3-6.27 11.2-12.83 18-19.66l.25-.25a8.43 8.43 0 0 0 .66-.71c-.94-.47-1.93-.91-2.92-1.32z" style="fill:#d48d77"/><path class="cls-5" d="M391.14 358.18c-.86 1.07-1.75 2.19-2.67 3.38l-1.52 2q-8.28 10.69-15.7 19.79c-52 63.69-75.41 71.07-118.15 71.07-82.45 0-92 5.24-104.17 34.16 3.55 1.65 7.14 3.2 10.78 4.68 11.63-24.74 20.8-31.33 76-31.33 93.38 0 100.44-29.76 138.76-75.06 5.3-6.27 11.2-12.83 18-19.66l.25-.25a8.43 8.43 0 0 0 .66-.71c3.25-3.72 1.4-6.25-2.24-8.07z"/><path class="cls-5" d="m384.32 340.91-2.55 3.09-.39.47-.08.1-8.22 9.92-8.25 9.95-26.52 32c-12.11 12.11-24.25 26-43.37 26 0 0 31.63-14.34 45.19-33.68 5.41-7.71 13.53-18.13 21.36-27.87l.42-.51c5.49-6.83 10.79-13.28 14.85-18.19l.39-.48.26-.32c1.8-2.17 3.33-4 4.49-5.39a8 8 0 0 1 2.42 4.91z"/><path class="cls-7" d="m274.54 335.31-5.2 5.2a9.65 9.65 0 0 1-13.65 0l-1.78-1.78-.2-.21c6.69-4.84 11.9-9.5 11.9-9.5 3.62-3.62 7-5.55 9.92-6.19a9.65 9.65 0 0 1-.99 12.48z"/><path class="cls-8" d="M382.07 344.27a9.65 9.65 0 0 0-13.65 0l-5.2 5.19c-3.77 3.77-4.65 10.47 1.62 15z"/><path class="cls-7" d="M381.77 344a9.57 9.57 0 0 0-4.63-2.37l-15.65 19.18a8.21 8.21 0 0 0 3.35 3.62z"/><path class="cls-8" d="M392.49 367.21c-6.81 6.83-12.71 13.39-18 19.66l-.21-.2-1.78-1.78a4.61 4.61 0 0 1-.37-.4q-.31-.35-.6-.72l-.29-.42a9.66 9.66 0 0 1 1.26-12.11l5.19-5.2a9.66 9.66 0 0 1 9-2.58l.28.07a9.74 9.74 0 0 1 2.16.86l.14.08a8.73 8.73 0 0 1 .94.6l.2.16.34.26.22.2.36.34z"/><path class="cls-7" d="M392.49 367.21c-6.81 6.83-12.71 13.39-18 19.66l-.21-.2-1.78-1.78a4.61 4.61 0 0 1-.37-.4q-.31-.35-.6-.72l-.29-.42q7.44-9.11 15.7-19.79a9.37 9.37 0 0 1 2.12.84h.05l.15.08a10.61 10.61 0 0 1 .94.6l.2.16.34.26.22.2.36.34z"/></svg>`,
 };
 
+const encodeSvg = (svg: string) => `data:image/svg+xml,${encodeURIComponent(svg)}`;
+
+const CURSOR_SVGS = {
+    pen: encodeSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`),
+    highlighter: encodeSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 4.36a3.18 3.18 0 0 1 4.5 4.5L11.5 20.22 3.78 20.22 3.78 12.5 18.36 4.36z"></path><path d="M3.78 12.5L11.5 20.22"></path><path d="M8 8l8 8"></path></svg>`),
+    eraser: encodeSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16a2.828 2.828 0 0 1 0-4L13 2a2.828 2.828 0 0 1 4 0L22 7a2.828 2.828 0 0 1 0 4L11 20"></path><path d="M6 13l5 5"></path></svg>`),
+    text: encodeSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>`)
+};
+
 const measureMultilineText = (
     ctx: CanvasRenderingContext2D,
     item: { text: string; fontSize: number; fontFamily: string; isBold: boolean; isItalic: boolean }
@@ -908,11 +917,15 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             } else if (!isPanActive) {
                 // Apply specific cursors for other tools
                 if (selectedTool === 'eraser') {
-                    canvas.style.cursor = 'cell'; // A crosshair-like cursor for eraser
-                } else if (['pen', 'highlighter', 'rectangle', 'circle', 'triangle', 'pentagon'].includes(selectedTool)) {
+                    canvas.style.cursor = `url("${CURSOR_SVGS.eraser}") 3 16, cell`;
+                } else if (selectedTool === 'pen') {
+                    canvas.style.cursor = `url("${CURSOR_SVGS.pen}") 2 22, crosshair`;
+                } else if (selectedTool === 'highlighter') {
+                    canvas.style.cursor = `url("${CURSOR_SVGS.highlighter}") 3 20, crosshair`;
+                } else if (['rectangle', 'circle', 'triangle', 'pentagon'].includes(selectedTool)) {
                     canvas.style.cursor = 'crosshair'; // Drawing precision cursor
                 } else if (selectedTool === 'text') {
-                    canvas.style.cursor = 'text';
+                    canvas.style.cursor = `url("${CURSOR_SVGS.text}") 12 12, text`;
                 } else if (selectedTool === 'sticker' || selectedTool === 'tag') {
                     canvas.style.cursor = 'copy';
                 } else {
