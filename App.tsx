@@ -147,6 +147,7 @@ const App: React.FC = () => {
         currentFileId,
         saveName,
         setSaveName,
+        setFileInfo,
         fetchSavesList,
         handleSave: hookHandleSave,
         handleLoad: hookHandleLoad,
@@ -559,9 +560,7 @@ const App: React.FC = () => {
             resetItemsHistory([]);
             setTransform({ scale: 1, x: 0, y: 0 });
             setSelectedItemIds([]);
-            // Hook automatically handles clear/null ID state if saveName is empty but the hook currently doesn't export setCurrentFileId directly. 
-            // Setting saveName to empty resets it for new save.
-            setSaveName('');
+            setFileInfo(null, '');
             deleteData(ITEMS_STORAGE_KEY).catch(err => console.error("Failed to clear IndexedDB canvas items:", err));
             deleteData(TRANSFORM_STORAGE_KEY).catch(err => console.error("Failed to clear IndexedDB canvas transform:", err));
         }
@@ -1351,7 +1350,7 @@ const App: React.FC = () => {
                                         onBlur={() => {
                                             const newName = tempTitle.trim();
                                             if (newName && newName !== saveName) {
-                                                setSaveName(newName);
+                                                setFileInfo(currentFileId, newName);
                                             }
                                             setIsEditingTitle(false);
                                         }}
@@ -1359,7 +1358,7 @@ const App: React.FC = () => {
                                             if (e.key === 'Enter') {
                                                 const newName = tempTitle.trim();
                                                 if (newName && newName !== saveName) {
-                                                    setSaveName(newName);
+                                                    setFileInfo(currentFileId, newName);
                                                 }
                                                 setIsEditingTitle(false);
                                             } else if (e.key === 'Escape') {

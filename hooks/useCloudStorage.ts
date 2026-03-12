@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { compressData, decompressData, generateId, validateAndMigrateItems } from '../lib/utils';
 import { loadData, saveData, deleteData } from '../lib/db';
@@ -23,6 +23,38 @@ export const useCloudStorage = (
     const [savesList, setSavesList] = useState<SaveMetadata[]>([]);
     const [currentFileId, setCurrentFileId] = useState<string | null>(null);
     const [saveName, setSaveName] = useState('');
+
+    const setFileInfo = useCallback(async (id: string | null, name: string) => {
+        setCurrentFileId(id);
+        setSaveName(name);
+        try {
+            if (id) {
+                await saveData('pdf-canvas-current-id', id);
+                await saveData('pdf-canvas-save-name', name);
+            } else {
+                await deleteData('pdf-canvas-current-id');
+                await deleteData('pdf-canvas-save-name');
+            }
+        } catch (err) {
+            console.error("Failed to save file info state to DB:", err);
+        }
+    }, []);
+
+    useEffect(() => {
+        const loadInitialFileInfo = async () => {
+            try {
+                const savedId = await loadData<string>('pdf-canvas-current-id');
+                const savedName = await loadData<string>('pdf-canvas-save-name');
+                if (savedId) {
+                    setCurrentFileId(savedId);
+                    if (savedName) setSaveName(savedName);
+                }
+            } catch (err) {
+                console.error("Failed to load initial file info:", err);
+            }
+        };
+        loadInitialFileInfo();
+    }, []);
 
     const fetchSavesList = useCallback(async () => {
         try {
@@ -93,8 +125,7 @@ export const useCloudStorage = (
                 });
                 if (saveError) throw saveError;
 
-                setCurrentFileId(saveId!);
-                setSaveName(currentSaveName);
+                await setFileInfo(saveId!, currentSaveName);
                 await fetchSavesList();
 
             } else {
@@ -128,8 +159,7 @@ export const useCloudStorage = (
                 await saveData(SAVES_LIST_KEY, newList);
 
                 setSavesList(newList);
-                setCurrentFileId(saveId);
-                setSaveName(currentSaveName);
+                await setFileInfo(saveId, currentSaveName);
             }
 
             setStatusMessage({ text: targetId ? 'Overwritten successfully!' : 'Saved successfully!', type: 'success' });
@@ -185,8 +215,7 @@ export const useCloudStorage = (
                     setTransform({ scale: 1, x: 0, y: 0 });
                 }
 
-                setCurrentFileId(id);
-                setSaveName(loadedName);
+                await setFileInfo(id, loadedName);
 
                 setStatusMessage({ text: 'Loaded successfully!', type: 'success' });
             } catch (error) {
@@ -208,8 +237,7 @@ export const useCloudStorage = (
                     if (error) throw error;
                     await fetchSavesList();
                     if (currentFileId === id) {
-                        setCurrentFileId(null);
-                        setSaveName('');
+                        await setFileInfo(null, '');
                     }
                 } else {
                     await deleteData(`save-items-${id}`);
@@ -220,8 +248,7 @@ export const useCloudStorage = (
                     await saveData(SAVES_LIST_KEY, newList);
                     setSavesList(newList);
                     if (currentFileId === id) {
-                        setCurrentFileId(null);
-                        setSaveName('');
+                        await setFileInfo(null, '');
                     }
                 }
 
@@ -240,6 +267,7 @@ export const useCloudStorage = (
         currentFileId,
         saveName,
         setSaveName,
+        setFileInfo,
         fetchSavesList,
         handleSave,
         handleLoad,
