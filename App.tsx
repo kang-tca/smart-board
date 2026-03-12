@@ -1297,16 +1297,14 @@ const App: React.FC = () => {
                     <header className="hidden md:grid grid-cols-3 items-center p-2 bg-white shadow-md z-20">
                         {/* Left Controls */}
                         <div className="flex items-center space-x-2 justify-start">
-                            {/* Auth Button - Now on Left */}
+                            {/* Settings Button - Moved to Left */}
                             <div className="relative group mr-2">
-                                <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 transition-colors" title={`${currentUser?.displayName || t('profile.guest')}\n${t('profile.tooltip')}`}>
-                                    {currentUser ? (
-                                        <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-8 h-8 rounded-full border border-gray-300" />
-                                    ) : (
-                                        <div className="w-8 h-8 rounded-full border border-gray-300 bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm">
-                                            <Icon name="user" className="w-5 h-5 text-gray-400" />
-                                        </div>
-                                    )}
+                                <button 
+                                    onClick={() => setIsSettingsOpen(true)} 
+                                    className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-200 transition-colors" 
+                                    title={t('settings.title')}
+                                >
+                                    <Icon name="settings" className="w-7 h-7 text-gray-600" />
                                 </button>
                             </div>
 
@@ -1351,15 +1349,6 @@ const App: React.FC = () => {
 
                         {/* Right Controls */}
                         <div className="flex items-center space-x-2 justify-end">
-                            <button
-                                onClick={() => setIsSettingsOpen(true)}
-                                className="mr-2 p-2 text-gray-500 hover:bg-gray-200 rounded-full transition-colors flex items-center justify-center"
-                                title={t('settings.title')}
-                            >
-                                <Icon name="settings" className="w-6 h-6" />
-                            </button>
-
-                            <div className="w-px h-6 bg-gray-300 mr-2"></div>
                             {statusMessage && (
                                 <div className={`hidden lg:block text-sm px-3 py-1 rounded-md transition-opacity duration-300 ${statusMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                     {statusMessage.text}
@@ -1445,6 +1434,36 @@ const App: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-4">
+                                    {/* User Profile Section */}
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <div className="flex items-center gap-3">
+                                            {currentUser ? (
+                                                <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-10 h-10 rounded-full border border-gray-300 shadow-sm" />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full border border-gray-300 bg-white flex items-center justify-center text-gray-500 shadow-sm">
+                                                    <Icon name="user" className="w-6 h-6 text-gray-400" />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {currentUser ? currentUser.displayName : t('profile.guest')}
+                                                </p>
+                                                {currentUser && <p className="text-xs text-gray-500">{currentUser.email}</p>}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setIsSettingsOpen(false);
+                                                handleLogout();
+                                            }}
+                                            className="px-3 py-1.5 text-sm bg-red-50 text-red-600 hover:bg-red-100 rounded-md transition-colors border border-red-200"
+                                            title={t('auth.logout')}
+                                        >
+                                            {t('auth.logout')}
+                                        </button>
+                                    </div>
+
+                                    {/* Language Section */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.language')}</label>
                                         <div className="grid grid-cols-1 gap-2">

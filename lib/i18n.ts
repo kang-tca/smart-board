@@ -18,7 +18,8 @@ const resources = {
                 hasAccount: "Already have an account?",
                 guestPrompt: "Or just want to look around?",
                 continueGuest: "Continue as Guest",
-                rights: "Smart Board. All rights reserved."
+                rights: "Smart Board. All rights reserved.",
+                logout: "Logout"
             },
             toolbar: {
                 select: "Select & Move Item (V)",
@@ -134,7 +135,8 @@ const resources = {
                 hasAccount: "이미 계정이 있으신가요?",
                 guestPrompt: "아니면 바로 둘러보실래요?",
                 continueGuest: "게스트로 계속하기",
-                rights: "Smart Board. 모든 권리 보유."
+                rights: "Smart Board. 모든 권리 보유.",
+                logout: "로그아웃"
             },
             toolbar: {
                 select: "선택 및 이동 (V)",
@@ -250,7 +252,8 @@ const resources = {
                 hasAccount: "すでにアカウントをお持ちですか？",
                 guestPrompt: "まずは見てみたいですか？",
                 continueGuest: "ゲストとして続行",
-                rights: "Smart Board. 無断複写・転載を禁じます."
+                rights: "Smart Board. 無断複写・転載を禁じます.",
+                logout: "ログアウト"
             },
             toolbar: {
                 select: "アイテムの選択と移動 (V)",
