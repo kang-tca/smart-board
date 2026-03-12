@@ -1435,21 +1435,11 @@ const App: React.FC = () => {
 
                                 <div className="space-y-4">
                                     {/* User Profile Section */}
-                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                        <div className="flex items-center gap-3">
-                                            {currentUser ? (
-                                                <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-10 h-10 rounded-full border border-gray-300 shadow-sm" />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-full border border-gray-300 bg-white flex items-center justify-center text-gray-500 shadow-sm">
-                                                    <Icon name="user" className="w-6 h-6 text-gray-400" />
-                                                </div>
-                                            )}
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {currentUser ? currentUser.displayName : t('profile.guest')}
-                                                </p>
-                                                {currentUser && <p className="text-xs text-gray-500">{currentUser.email}</p>}
-                                            </div>
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 gap-4">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                {currentUser ? currentUser.email : t('profile.guest')}
+                                            </p>
                                         </div>
                                         <button
                                             onClick={() => {
