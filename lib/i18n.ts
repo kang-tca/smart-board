@@ -79,6 +79,44 @@ const resources = {
             },
             calculator: {
                 title: "Calculator"
+            },
+            modals: {
+                save: {
+                    title: "Save Canvas",
+                    storage: "Storage",
+                    cloud: "Google Cloud (Firestore)",
+                    local: "Local Storage (Browser)",
+                    loggedInAs: "Logged in as",
+                    fileName: "File Name",
+                    fileNamePlaceholder: "My Awesome Canvas",
+                    existingFiles: "Existing Files (Select to overwrite)",
+                    noFiles: "No saved files yet.",
+                    cancel: "Cancel",
+                    saveOverwrite: "Save (Overwrite)",
+                    saveAsNew: "Save as New",
+                    saveBtn: "Save"
+                },
+                load: {
+                    title: "Load Canvas",
+                    source: "Source",
+                    noCanvases: "No saved canvases found.",
+                    lastSaved: "Last saved",
+                    loadBtn: "Load",
+                },
+                share: {
+                    title: "Share Canvas",
+                    generating: "Generating link...",
+                    yourLink: "Your unique share link:",
+                    copy: "Copy",
+                    description: "Click the button below to generate a unique link to share this canvas. Anyone with the link will be able to view and load it.",
+                    generateBtn: "Generate Share Link"
+                },
+                prompts: {
+                    logout: "Are you sure you want to log out?",
+                    newCanvas: "Are you sure you want to create a new canvas? This will clear the current canvas and cannot be undone.",
+                    emailCopied: "Email copied to clipboard!",
+                    linkCopied: "Link copied to clipboard!"
+                }
             }
         }
     },
@@ -157,6 +195,44 @@ const resources = {
             },
             calculator: {
                 title: "계산기"
+            },
+            modals: {
+                save: {
+                    title: "캔버스 저장",
+                    storage: "저장 위치",
+                    cloud: "구글 클라우드 (Firestore)",
+                    local: "로컬 저장소 (웹 브라우저)",
+                    loggedInAs: "로그인 계정",
+                    fileName: "파일 이름",
+                    fileNamePlaceholder: "나의 멋진 캔버스",
+                    existingFiles: "기존 파일 (덮어쓰려면 선택)",
+                    noFiles: "아직 저장된 파일이 없습니다.",
+                    cancel: "취소",
+                    saveOverwrite: "저장 (덮어쓰기)",
+                    saveAsNew: "새로 저장",
+                    saveBtn: "저장"
+                },
+                load: {
+                    title: "캔버스 불러오기",
+                    source: "가져올 위치",
+                    noCanvases: "저장된 캔버스가 없습니다.",
+                    lastSaved: "마지막 저장 시간",
+                    loadBtn: "불러오기",
+                },
+                share: {
+                    title: "캔버스 공유",
+                    generating: "링크 생성 중...",
+                    yourLink: "고유 공유 링크:",
+                    copy: "복사",
+                    description: "아래 버튼을 클릭하여 이 캔버스를 공유할 수 있는 고유 링크를 생성하세요. 링크가 있는 누구나 캔버스를 보고 불러올 수 있습니다.",
+                    generateBtn: "공유 링크 생성"
+                },
+                prompts: {
+                    logout: "정말로 로그아웃 하시겠습니까?",
+                    newCanvas: "새로운 캔버스를 여시겠습니까? 현재 캔버스의 모든 내용이 지워지며 복구할 수 없습니다.",
+                    emailCopied: "이메일이 클립보드에 복사되었습니다!",
+                    linkCopied: "링크가 클립보드에 복사되었습니다!"
+                }
             }
         }
     },
@@ -235,6 +311,44 @@ const resources = {
             },
             calculator: {
                 title: "電卓"
+            },
+            modals: {
+                save: {
+                    title: "キャンバスを保存",
+                    storage: "保存先",
+                    cloud: "Googleクラウド (Firestore)",
+                    local: "ローカルストレージ (ブラウザ)",
+                    loggedInAs: "ログインアカウント",
+                    fileName: "ファイル名",
+                    fileNamePlaceholder: "私の素晴らしいキャンバス",
+                    existingFiles: "既存のファイル (上書きする場合は選択)",
+                    noFiles: "保存されたファイルはまだありません。",
+                    cancel: "キャンセル",
+                    saveOverwrite: "保存 (上書き)",
+                    saveAsNew: "新しく保存",
+                    saveBtn: "保存"
+                },
+                load: {
+                    title: "キャンバスを読み込む",
+                    source: "ソース",
+                    noCanvases: "保存されたキャンバスが見つかりません。",
+                    lastSaved: "最終保存",
+                    loadBtn: "読み込む",
+                },
+                share: {
+                    title: "キャンバスを共有",
+                    generating: "リンクを生成中...",
+                    yourLink: "一意の共有リンク:",
+                    copy: "コピー",
+                    description: "下のボタンをクリックして、このキャンバスを共有するためのリンクを生成します。リンクを知っている人は誰でも表示して読み込むことができます。",
+                    generateBtn: "共有リンクを生成"
+                },
+                prompts: {
+                    logout: "本当にログアウトしますか？",
+                    newCanvas: "本当に新しいキャンバスを作成しますか？現在のキャンバスはすべてクリアされ、元に戻すことはできません。",
+                    emailCopied: "メールがクリップボードにコピーされました！",
+                    linkCopied: "リンクがクリップボードにコピーされました！"
+                }
             }
         }
     }

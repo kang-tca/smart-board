@@ -229,7 +229,7 @@ const App: React.FC = () => {
     };
 
     const handleLogout = async () => {
-        if (window.confirm('Are you sure you want to log out?')) {
+        if (window.confirm(t('modals.prompts.logout'))) {
             if (isGuest) {
                 setIsGuest(false);
                 return;
@@ -553,7 +553,7 @@ const App: React.FC = () => {
     }, [gridOpacity, isLoadedFromDB, currentUser, isStudentMode]);
 
     const handleNewCanvas = useCallback(() => {
-        if (window.confirm('Are you sure you want to create a new canvas? This will clear the current canvas and cannot be undone.')) {
+        if (window.confirm(t('modals.prompts.newCanvas'))) {
             resetItemsHistory([]);
             setTransform({ scale: 1, x: 0, y: 0 });
             setSelectedItemIds([]);
@@ -1336,7 +1336,7 @@ const App: React.FC = () => {
                                     title="kang@tcreator.kr"
                                     onClick={() => {
                                         navigator.clipboard.writeText('kang@tcreator.kr');
-                                        setStatusMessage({ text: 'Email copied to clipboard!', type: 'success' });
+                                        setStatusMessage({ text: t('modals.prompts.emailCopied'), type: 'success' });
                                     }}
                                 >
                                     by @teacher.kang
@@ -1582,19 +1582,19 @@ const App: React.FC = () => {
                     <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
                         <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4 flex items-center gap-2">
                             <Icon name="cloud-upload" className="w-5 h-5 text-blue-600" />
-                            Save Canvas
+                            {t('modals.save.title')}
                         </h3>
 
                         <div className="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
                             <p className="text-sm text-gray-600 flex items-center gap-2">
                                 <span className={`w-2 h-2 rounded-full ${currentUser ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-                                Storage: <strong>{currentUser ? 'Google Cloud (Firestore)' : 'Local Storage (Browser)'}</strong>
+                                {t('modals.save.storage')}: <strong>{currentUser ? t('modals.save.cloud') : t('modals.save.local')}</strong>
                             </p>
-                            {currentUser && <p className="text-xs text-gray-500 mt-1 ml-4">Logged in as {currentUser.email}</p>}
+                            {currentUser && <p className="text-xs text-gray-500 mt-1 ml-4">{t('modals.save.loggedInAs')} {currentUser.email}</p>}
                         </div>
 
                         <div>
-                            <label htmlFor="save-name" className="block text-sm font-medium text-gray-700">File Name</label>
+                            <label htmlFor="save-name" className="block text-sm font-medium text-gray-700">{t('modals.save.fileName')}</label>
                             <div className="mt-1">
                                 <input
                                     type="text"
@@ -1602,7 +1602,7 @@ const App: React.FC = () => {
                                     value={saveName}
                                     onChange={(e) => setSaveName(e.target.value)}
                                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    placeholder="My Awesome Canvas"
+                                    placeholder={t('modals.save.fileNamePlaceholder')}
                                     autoFocus
                                 />
                             </div>
@@ -1610,12 +1610,12 @@ const App: React.FC = () => {
 
                         {/* New List Block */}
                         <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Existing Files (Select to overwrite)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('modals.save.existingFiles')}</label>
                             <div className="border border-gray-300 rounded-md h-48 overflow-y-auto bg-gray-50">
                                 {savesList.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-500 text-sm">
                                         <Icon name="cloud-upload" className="w-8 h-8 mb-2 opacity-50" />
-                                        <p>No saved files yet.</p>
+                                        <p>{t('modals.save.noFiles')}</p>
                                     </div>
                                 ) : (
                                     <ul className="divide-y divide-gray-200 bg-white">
@@ -1641,7 +1641,7 @@ const App: React.FC = () => {
 
                         <div className="mt-6 flex justify-end space-x-3">
                             <button type="button" onClick={() => setIsSaveModalOpen(false)} className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Cancel
+                                {t('modals.save.cancel')}
                             </button>
                             {currentFileId && (
                                 <button
@@ -1649,10 +1649,10 @@ const App: React.FC = () => {
                                     onClick={() => handleSave(currentFileId)}
                                     disabled={!saveName.trim() || isProcessingCloud === 'save-button'}
                                     className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-green-300 disabled:cursor-not-allowed"
-                                    title="Overwrite currently loaded file"
+                                    title={t('modals.save.saveOverwrite')}
                                 >
                                     {isProcessingCloud === 'save-button' && <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
-                                    Save (Overwrite)
+                                    {t('modals.save.saveOverwrite')}
                                 </button>
                             )}
                             <button
@@ -1662,7 +1662,7 @@ const App: React.FC = () => {
                                 className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed"
                             >
                                 {isProcessingCloud === 'save-button' && !currentFileId && <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
-                                {currentFileId ? 'Save as New' : 'Save'}
+                                {currentFileId ? t('modals.save.saveAsNew') : t('modals.save.saveBtn')}
                             </button>
                         </div>
                     </div>
@@ -1676,7 +1676,7 @@ const App: React.FC = () => {
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-medium leading-6 text-gray-900 flex items-center gap-2">
                                 <Icon name="cloud-download" className="w-5 h-5 text-blue-600" />
-                                Load Canvas
+                                {t('modals.load.title')}
                             </h3>
                             <button onClick={() => setIsLoadModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <span className="sr-only">Close</span>
@@ -1687,14 +1687,14 @@ const App: React.FC = () => {
                         <div className="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
                             <p className="text-sm text-gray-600 flex items-center gap-2">
                                 <span className={`w-2 h-2 rounded-full ${currentUser ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-                                Source: <strong>{currentUser ? 'Google Cloud (Firestore)' : 'Local Storage (Browser)'}</strong>
+                                {t('modals.load.source')}: <strong>{currentUser ? t('modals.save.cloud') : t('modals.save.local')}</strong>
                             </p>
-                            {currentUser && <p className="text-xs text-gray-500 mt-1 ml-4">Logged in as {currentUser.email}</p>}
+                            {currentUser && <p className="text-xs text-gray-500 mt-1 ml-4">{t('modals.save.loggedInAs')} {currentUser.email}</p>}
                         </div>
 
                         <div className="flex-grow overflow-y-auto pr-2">
                             {savesList.length === 0 ? (
-                                <p className="text-center text-gray-500 py-8">No saved canvases found.</p>
+                                <p className="text-center text-gray-500 py-8">{t('modals.load.noCanvases')}</p>
                             ) : (
                                 <ul className="divide-y divide-gray-200">
                                     {[...savesList].sort((a, b) => b.lastModified - a.lastModified).map(save => (
@@ -1702,7 +1702,7 @@ const App: React.FC = () => {
                                             <div>
                                                 <p className="text-sm font-medium text-gray-900">{save.name}</p>
                                                 <p className="text-sm text-gray-500">
-                                                    Last saved: {new Date(save.lastModified).toLocaleString()}
+                                                    {t('modals.load.lastSaved')}: {new Date(save.lastModified).toLocaleString()}
                                                 </p>
                                             </div>
                                             <div className="flex space-x-2">
@@ -1712,7 +1712,7 @@ const App: React.FC = () => {
                                                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300"
                                                 >
                                                     {isProcessingCloud === save.id && <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
-                                                    Load
+                                                    {t('modals.load.loadBtn')}
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(save.id, save.name)}
@@ -1736,7 +1736,7 @@ const App: React.FC = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-medium leading-6 text-gray-900">Share Canvas</h3>
+                            <h3 className="text-lg font-medium leading-6 text-gray-900">{t('modals.share.title')}</h3>
                             <button onClick={() => setIsShareModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <span className="sr-only">Close</span>
                                 <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1746,11 +1746,11 @@ const App: React.FC = () => {
                             {isGeneratingLink ? (
                                 <div className="flex items-center justify-center p-4">
                                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    <span>Generating link...</span>
+                                    <span>{t('modals.share.generating')}</span>
                                 </div>
                             ) : shareableLink ? (
                                 <div>
-                                    <label htmlFor="share-url" className="block text-sm font-medium text-gray-700">Your unique share link:</label>
+                                    <label htmlFor="share-url" className="block text-sm font-medium text-gray-700">{t('modals.share.yourLink')}</label>
                                     <div className="mt-1 flex rounded-md shadow-sm">
                                         <input
                                             type="text"
@@ -1764,24 +1764,24 @@ const App: React.FC = () => {
                                             type="button"
                                             onClick={() => {
                                                 navigator.clipboard.writeText(shareableLink);
-                                                setStatusMessage({ text: 'Link copied to clipboard!', type: 'success' });
+                                                setStatusMessage({ text: t('modals.prompts.linkCopied'), type: 'success' });
                                             }}
                                             className="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                         >
                                             <Icon name="copy" className="h-5 w-5 text-gray-400" />
-                                            <span>Copy</span>
+                                            <span>{t('modals.share.copy')}</span>
                                         </button>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="text-center">
-                                    <p className="text-sm text-gray-600 mb-4">Click the button below to generate a unique link to share this canvas. Anyone with the link will be able to view and load it.</p>
+                                    <p className="text-sm text-gray-600 mb-4">{t('modals.share.description')}</p>
                                     <button
                                         type="button"
                                         onClick={handleGenerateShareLink}
                                         className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                     >
-                                        Generate Share Link
+                                        {t('modals.share.generateBtn')}
                                     </button>
                                 </div>
                             )}
