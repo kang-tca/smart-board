@@ -1191,7 +1191,7 @@ const App: React.FC = () => {
         );
     }
 
-    if (!currentUser) {
+    if (!currentUser && !isGuest) {
         return (
             <div className="w-screen h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center transform transition-all hover:scale-[1.01] duration-300">
