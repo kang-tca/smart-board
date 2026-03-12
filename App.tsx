@@ -425,8 +425,8 @@ const App: React.FC = () => {
             }
         };
 
-        // Only load canvas data if authenticated and NOT in student mode
-        if (currentUser && !isStudentMode) {
+        // Only load canvas data if authenticated or guest, and NOT in student mode
+        if ((currentUser || isGuest) && !isStudentMode) {
             const loadCanvasState = async () => {
                 try {
                     const savedItemsData = await loadData<any[]>(ITEMS_STORAGE_KEY);
@@ -455,7 +455,7 @@ const App: React.FC = () => {
             };
             loadCanvasState();
         }
-    }, [resetItemsHistory, currentUser, isStudentMode]);
+    }, [resetItemsHistory, currentUser, isGuest, isStudentMode]);
 
 
 
