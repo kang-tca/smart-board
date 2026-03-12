@@ -1197,9 +1197,7 @@ const App: React.FC = () => {
             <div className="w-screen h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center transform transition-all hover:scale-[1.01] duration-300">
                     <div className="mb-8 flex justify-center">
-                        <div className="p-4 bg-blue-100 rounded-full">
-                            <Icon name="pen" className="w-12 h-12 text-blue-600" />
-                        </div>
+                        <img src="/icon.jpg" alt="Smart Board Logo" className="w-20 h-20 rounded-2xl shadow-md border border-gray-100" />
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('auth.title')}</h1>
                     <p className="text-gray-600 mb-8">
@@ -1328,6 +1326,7 @@ const App: React.FC = () => {
 
                         {/* Centered Title */}
                         <div className="flex items-center space-x-2 justify-center">
+                            <img src="/icon.jpg" alt="Logo" className="w-6 h-6 rounded-md shadow-sm" />
                             <h1 className="text-xl font-bold text-gray-800">Smart Board</h1>
                             <div>
                                 <div
@@ -1443,6 +1442,7 @@ const App: React.FC = () => {
                     {/* Mobile Header */}
                     <header className="flex md:hidden items-center justify-between p-2 bg-white shadow-md z-20">
                         <div className="flex items-center space-x-2">
+                            <img src="/icon.jpg" alt="Logo" className="w-6 h-6 rounded-md shadow-sm" />
                             <h1 className="text-xl font-bold text-gray-800">{t('auth.title')}</h1>
                         </div>
                         <div className="flex items-center space-x-2">
