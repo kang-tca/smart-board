@@ -598,7 +598,7 @@ const App: React.FC = () => {
     };
 
     useEffect(() => {
-        if (!currentUser || isStudentMode) return; // Disable shortcuts if not logged in
+        if ((!currentUser && !isGuest) || isStudentMode) return; // Disable shortcuts if not logged in/guest
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
