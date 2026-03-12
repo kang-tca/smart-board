@@ -205,6 +205,8 @@ const App: React.FC = () => {
     const [password, setPassword] = useState('');
     const [isLoginMode, setIsLoginMode] = useState(true);
     const [isGuest, setIsGuest] = useState(false);
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [tempTitle, setTempTitle] = useState('');
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1341,9 +1343,44 @@ const App: React.FC = () => {
                                 </div>
                             </div>
                             {currentFileId && saveName && (
-                                <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full border border-blue-200 truncate max-w-[150px]">
-                                    {saveName}
-                                </span>
+                                isEditingTitle ? (
+                                    <input
+                                        type="text"
+                                        value={tempTitle}
+                                        onChange={(e) => setTempTitle(e.target.value)}
+                                        onBlur={() => {
+                                            const newName = tempTitle.trim();
+                                            if (newName && newName !== saveName) {
+                                                setSaveName(newName);
+                                            }
+                                            setIsEditingTitle(false);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                const newName = tempTitle.trim();
+                                                if (newName && newName !== saveName) {
+                                                    setSaveName(newName);
+                                                }
+                                                setIsEditingTitle(false);
+                                            } else if (e.key === 'Escape') {
+                                                setIsEditingTitle(false);
+                                            }
+                                        }}
+                                        autoFocus
+                                        className="text-xs px-2 py-0.5 bg-white text-blue-700 rounded-full border border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[150px]"
+                                    />
+                                ) : (
+                                    <span 
+                                        onClick={() => {
+                                            setTempTitle(saveName);
+                                            setIsEditingTitle(true);
+                                        }}
+                                        className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full border border-blue-200 truncate max-w-[150px] cursor-pointer hover:bg-blue-200 transition-colors"
+                                        title={t('toolbar.renameClick', 'Click to rename')}
+                                    >
+                                        {saveName}
+                                    </span>
+                                )
                             )}
                         </div>
 
