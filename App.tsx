@@ -1585,14 +1585,6 @@ const App: React.FC = () => {
                             {t('modals.save.title')}
                         </h3>
 
-                        <div className="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
-                            <p className="text-sm text-gray-600 flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${currentUser ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-                                {t('modals.save.storage')}: <strong>{currentUser ? t('modals.save.cloud') : t('modals.save.local')}</strong>
-                            </p>
-                            {currentUser && <p className="text-xs text-gray-500 mt-1 ml-4">{t('modals.save.loggedInAs')} {currentUser.email}</p>}
-                        </div>
-
                         <div>
                             <label htmlFor="save-name" className="block text-sm font-medium text-gray-700">{t('modals.save.fileName')}</label>
                             <div className="mt-1">
@@ -1682,14 +1674,6 @@ const App: React.FC = () => {
                                 <span className="sr-only">Close</span>
                                 <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
-                        </div>
-
-                        <div className="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
-                            <p className="text-sm text-gray-600 flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${currentUser ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-                                {t('modals.load.source')}: <strong>{currentUser ? t('modals.save.cloud') : t('modals.save.local')}</strong>
-                            </p>
-                            {currentUser && <p className="text-xs text-gray-500 mt-1 ml-4">{t('modals.save.loggedInAs')} {currentUser.email}</p>}
                         </div>
 
                         <div className="flex-grow overflow-y-auto pr-2">
