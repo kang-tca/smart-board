@@ -478,6 +478,22 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         ctx.restore();
     };
 
+    const getVisibleBounds = (canvasWidth: number, canvasHeight: number, currentTransform: Transform) => {
+        return {
+            x: -currentTransform.x / currentTransform.scale,
+            y: -currentTransform.y / currentTransform.scale,
+            width: canvasWidth / currentTransform.scale,
+            height: canvasHeight / currentTransform.scale
+        };
+    };
+
+    const intersects = (r1: { x: number, y: number, width: number, height: number }, r2: { x: number, y: number, width: number, height: number }) => {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    };
+
     const updateBackgroundCache = useCallback(() => {
         const canvas = canvasRef.current;
         const bgCanvas = backgroundCanvasCache.current;
@@ -504,12 +520,18 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         const visibleItems = items.filter(item => item.visible && !erasedDuringDraw.has(item.id));
         const sortedItems = [...visibleItems].sort((a, b) => a.zIndex - b.zIndex);
 
+        const visibleViewport = getVisibleBounds(bgCanvas.width, bgCanvas.height, transform);
+
         sortedItems.forEach(item => {
             if ((draggedState && selectedItemIds.includes(item.id)) || 
                 (resizingItem && item.id === resizingItem.item.id)) {
                 return;
             }
-            drawItem(ctx, item);
+            
+            const itemBounds = getBoundingBox(item);
+            if (intersects(itemBounds, visibleViewport)) {
+                drawItem(ctx, item);
+            }
         });
 
         ctx.restore();
@@ -540,14 +562,27 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         const visibleItems = items.filter(item => item.visible && !erasedDuringDraw.has(item.id));
         const sortedItems = [...visibleItems].sort((a, b) => a.zIndex - b.zIndex);
 
+        const visibleViewport = getVisibleBounds(canvas.width, canvas.height, transform);
+
         sortedItems.forEach(item => {
+            let itemToDraw = item;
+            let boundsToTest = null;
+
             if (draggedState && selectedItemIds.includes(item.id)) {
                 const initialPos = draggedState.initialItemPositions.get(item.id);
                 if (initialPos) {
-                    drawItem(ctx, { ...item, x: initialPos.x + dragDelta.dx, y: initialPos.y + dragDelta.dy });
+                    itemToDraw = { ...item, x: initialPos.x + dragDelta.dx, y: initialPos.y + dragDelta.dy };
+                    boundsToTest = getBoundingBox(itemToDraw);
                 }
             } else if (resizingItem && item.id === resizingItem.item.id) {
-                drawItem(ctx, resizingItem.item);
+                itemToDraw = resizingItem.item;
+                boundsToTest = getBoundingBox(itemToDraw);
+            }
+
+            // Only dynamically draw items if they are currently being manipulated OR they are being tracked but are within viewport
+            // (Note: Static items are handled by the bg canvas and don't enter this drawAll block anyway unless manipulated)
+            if (boundsToTest && intersects(boundsToTest, visibleViewport)) {
+                 drawItem(ctx, itemToDraw);
             }
         });
 
