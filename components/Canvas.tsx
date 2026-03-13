@@ -151,6 +151,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
     isMultiTouchEnabled = false,
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const backgroundCanvasCache = useRef(document.createElement('canvas'));
     const textInputRef = useRef<HTMLTextAreaElement>(null);
     const tagIconImageRef = useRef<HTMLImageElement | null>(null);
 
@@ -477,23 +478,57 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         ctx.restore();
     };
 
-    const drawAll = useCallback(() => {
-        const ctx = getCanvasContext();
+    const updateBackgroundCache = useCallback(() => {
         const canvas = canvasRef.current;
-        if (!ctx || !canvas) return;
+        const bgCanvas = backgroundCanvasCache.current;
+        if (!canvas) return;
+
+        if (bgCanvas.width !== canvas.width || bgCanvas.height !== canvas.height) {
+            bgCanvas.width = canvas.width;
+            bgCanvas.height = canvas.height;
+        }
+
+        const ctx = bgCanvas.getContext('2d');
+        if (!ctx) return;
 
         ctx.save();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Use background color from state
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
-        // Transform coordinate system
         ctx.translate(transform.x, transform.y);
         ctx.scale(transform.scale, transform.scale);
 
-        // Draw Grid
-        drawGrid(ctx, canvas.width, canvas.height);
+        drawGrid(ctx, bgCanvas.width, bgCanvas.height);
 
         const visibleItems = items.filter(item => item.visible && !erasedDuringDraw.has(item.id));
         const sortedItems = [...visibleItems].sort((a, b) => a.zIndex - b.zIndex);
+
+        sortedItems.forEach(item => {
+            if ((draggedState && selectedItemIds.includes(item.id)) || 
+                (resizingItem && item.id === resizingItem.item.id)) {
+                return;
+            }
+            drawItem(ctx, item);
+        });
+
+        ctx.restore();
+    }, [items, transform, gridOpacity, backgroundColor, erasedDuringDraw, draggedState, resizingItem, selectedItemIds, drawItem]);
+
+    const drawAll = useCallback(() => {
+        const ctx = getCanvasContext();
+        const canvas = canvasRef.current;
+        const bgCanvas = backgroundCanvasCache.current;
+        if (!ctx || !canvas) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw the cached background
+        ctx.drawImage(bgCanvas, 0, 0);
+
+        ctx.save();
+        ctx.translate(transform.x, transform.y);
+        ctx.scale(transform.scale, transform.scale);
 
         const dragDelta = draggedState
             ? {
@@ -502,17 +537,18 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             }
             : { dx: 0, dy: 0 };
 
+        const visibleItems = items.filter(item => item.visible && !erasedDuringDraw.has(item.id));
+        const sortedItems = [...visibleItems].sort((a, b) => a.zIndex - b.zIndex);
+
         sortedItems.forEach(item => {
-            let itemToDraw = item;
             if (draggedState && selectedItemIds.includes(item.id)) {
                 const initialPos = draggedState.initialItemPositions.get(item.id);
                 if (initialPos) {
-                    itemToDraw = { ...item, x: initialPos.x + dragDelta.dx, y: initialPos.y + dragDelta.dy };
+                    drawItem(ctx, { ...item, x: initialPos.x + dragDelta.dx, y: initialPos.y + dragDelta.dy });
                 }
             } else if (resizingItem && item.id === resizingItem.item.id) {
-                itemToDraw = resizingItem.item;
+                drawItem(ctx, resizingItem.item);
             }
-            drawItem(ctx, itemToDraw);
         });
 
         currentItems.forEach(item => drawItem(ctx, item));
@@ -562,7 +598,12 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         }
 
         ctx.restore();
-    }, [items, currentItems, getCanvasContext, drawItem, transform, selectedItemIds, draggedState, resizingItem, erasedDuringDraw, marquee, eraserPath, gridOpacity, backgroundColor]);
+    }, [items, currentItems, getCanvasContext, drawItem, transform, selectedItemIds, draggedState, resizingItem, erasedDuringDraw, marquee, eraserPath]);
+
+    // Force background cache update when its dependencies change
+    useEffect(() => {
+        updateBackgroundCache();
+    }, [updateBackgroundCache, imagesLoaded]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -573,13 +614,14 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                     canvas.width = parent.clientWidth;
                     canvas.height = parent.clientHeight;
                 }
+                updateBackgroundCache();
                 drawAll();
             };
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
             return () => window.removeEventListener('resize', resizeCanvas);
         }
-    }, [drawAll]);
+    }, [drawAll, updateBackgroundCache]);
 
     useEffect(() => {
         drawAll();
