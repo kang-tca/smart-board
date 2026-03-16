@@ -1544,7 +1544,21 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                 />
             )}
 
-            {/* Background & Grid Controls */}
+            {/* Background Color Toggle - Top Right */}
+            <div className="absolute top-4 right-4 z-10">
+                <button
+                    className="w-9 h-9 rounded-full border-2 border-white shadow-md transition-transform hover:scale-110 ring-1 ring-gray-200 pointer-events-auto"
+                    style={{ backgroundColor: backgroundColor }}
+                    onClick={() => {
+                        const currentIndex = backgroundColors.findIndex(c => c.color === backgroundColor);
+                        const nextIndex = (currentIndex === -1) ? 0 : (currentIndex + 1) % backgroundColors.length;
+                        setBackgroundColor(backgroundColors[nextIndex].color);
+                    }}
+                    title="Click to toggle background color"
+                />
+            </div>
+
+            {/* Zoom & Grid Controls - Bottom Right */}
             <div className="absolute bottom-5 right-5 flex flex-col items-end gap-3 z-10 pointer-events-none">
 
                 {/* Zoom Indicator */}
@@ -1586,19 +1600,6 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                         <Icon name="grid" className="w-6 h-6" />
                     </button>
                 </div>
-
-                {/* Background Color Toggle */}
-                <button
-                    className="w-10 h-10 rounded-full border-2 border-white shadow-md transition-transform hover:scale-110 ring-1 ring-gray-200 z-10 pointer-events-auto"
-                    style={{ backgroundColor: backgroundColor }}
-                    onClick={() => {
-                        const currentIndex = backgroundColors.findIndex(c => c.color === backgroundColor);
-                        // Handle case where current color is not in the list (default to 0)
-                        const nextIndex = (currentIndex === -1) ? 0 : (currentIndex + 1) % backgroundColors.length;
-                        setBackgroundColor(backgroundColors[nextIndex].color);
-                    }}
-                    title="Click to toggle background color"
-                />
             </div>
         </>
     );

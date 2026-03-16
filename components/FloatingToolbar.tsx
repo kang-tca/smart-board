@@ -16,53 +16,58 @@ const quickTools: { name: Tool, icon: string, label: string }[] = [
     { name: 'eraser', icon: 'eraser', label: 'Eraser (E)' }
 ];
 
+const getCurrentToolIcon = (tool: Tool): string => {
+    const found = quickTools.find(t => t.name === tool);
+    return found ? found.icon : 'pen';
+};
+
 export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ position, selectedTool, setSelectedTool }) => {
     const [isOpen, setIsOpen] = useState(false);
 
-    // Determine the alignment classes based on the requested position
-    const positionClasses = position === 'left' ? 'left-6' : 'right-6';
-    const menuOriginClass = position === 'left' ? 'origin-bottom-left' : 'origin-bottom-right';
+    const positionClasses = position === 'left' ? 'left-4' : 'right-4';
 
     const handleToolSelect = (tool: Tool) => {
         setSelectedTool(tool);
-        setIsOpen(false); // Optionally close the menu after selecting, or leave it open
+        setIsOpen(false);
     };
 
     return (
-        <div className={`absolute bottom-6 ${positionClasses} z-50 flex flex-col items-center select-none`}>
+        <div className={`absolute bottom-4 ${positionClasses} z-20 flex flex-col items-center select-none`}>
             
             {/* Expanded Tool Menu */}
-            <div 
-                className={`mb-3 flex flex-col gap-2 bg-white/95 backdrop-blur shadow-xl border border-gray-200 rounded-full p-2 transition-all duration-300 ${menuOriginClass}
-                ${isOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-50 translate-y-10 invisible'}`}
-            >
-                {quickTools.slice().reverse().map(tool => (
-                    <button
-                        key={tool.name}
-                        onClick={() => handleToolSelect(tool.name)}
-                        title={tool.label}
-                        className={`w-12 h-12 flex items-center justify-center rounded-full transition-all 
-                        ${selectedTool === tool.name ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
-                    >
-                        <Icon name={tool.icon} className="w-6 h-6" />
-                    </button>
-                ))}
-            </div>
+            {isOpen && (
+                <div className="mb-2 flex flex-col gap-1.5 bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200/80 rounded-2xl p-1.5 animate-fade-in-up">
+                    {quickTools.slice().reverse().map(tool => (
+                        <button
+                            key={tool.name}
+                            onClick={() => handleToolSelect(tool.name)}
+                            title={tool.label}
+                            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all 
+                            ${selectedTool === tool.name 
+                                ? 'bg-blue-100 text-blue-600' 
+                                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'}`}
+                        >
+                            <Icon name={tool.icon} className="w-5 h-5" />
+                        </button>
+                    ))}
+                </div>
+            )}
 
-            {/* Main Toggle Button */}
+            {/* Main Toggle Button - white/transparent with current tool icon */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-14 h-14 flex items-center justify-center rounded-full shadow-2xl transition-all duration-300 border-4 border-white
-                ${isOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-105'}
+                className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-200
+                    bg-white/80 backdrop-blur-sm border border-gray-200/80 shadow-md
+                    ${isOpen ? 'text-blue-600 bg-blue-50/80' : 'text-gray-600 hover:bg-white hover:shadow-lg'}
                 `}
                 title={isOpen ? "Close Quick Tools" : "Open Quick Tools"}
             >
                 {isOpen ? (
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 ) : (
-                    <Icon name={selectedTool === 'select' || selectedTool === 'hand' || selectedTool === 'pen' || selectedTool === 'highlighter' || selectedTool === 'eraser' ? quickTools.find(t => t.name === selectedTool)?.icon || 'pen' : 'pen'} className="w-6 h-6" />
+                    <Icon name={getCurrentToolIcon(selectedTool)} className="w-5 h-5" />
                 )}
             </button>
         </div>
