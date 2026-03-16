@@ -181,6 +181,9 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
 
     const [isDrawing, setIsDrawing] = useState(false); // Drawing, dragging, or panning
     const [currentItems, setCurrentItems] = useState<Map<number, CanvasItem>>(new Map());
+    const currentItemsRef = useRef<Map<number, CanvasItem>>(new Map());
+    const drawingRAFRef = useRef<number | null>(null);
+    const needsDrawRef = useRef(false);
 
     const [draggedState, setDraggedState] = useState<{
         startMousePos: { x: number; y: number };
@@ -586,7 +589,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             }
         });
 
-        currentItems.forEach(item => drawItem(ctx, item));
+        // Draw active strokes from ref (source of truth for live pen data) and state items\n        currentItemsRef.current.forEach(item => drawItem(ctx, item));\n        currentItems.forEach((item, pointerId) => {\n            // Only draw from state if not already in ref (ref has latest data)\n            if (!currentItemsRef.current.has(pointerId)) {\n                drawItem(ctx, item);\n            }\n        });
 
         if (eraserPath) {
             ctx.strokeStyle = '#888888';
@@ -634,6 +637,30 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
 
         ctx.restore();
     }, [items, currentItems, getCanvasContext, drawItem, transform, selectedItemIds, draggedState, resizingItem, erasedDuringDraw, marquee, eraserPath]);
+
+    // RAF-based drawing loop for active pen strokes
+    const drawActiveFrame = useCallback(() => {
+        if (!needsDrawRef.current) return;
+        needsDrawRef.current = false;
+
+        const ctx = getCanvasContext();
+        const canvas = canvasRef.current;
+        const bgCanvas = backgroundCanvasCache.current;
+        if (!ctx || !canvas) return;
+
+        // Fast path: blit cached background + draw only the active stroke
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bgCanvas, 0, 0);
+
+        ctx.save();
+        ctx.translate(transform.x, transform.y);
+        ctx.scale(transform.scale, transform.scale);
+
+        // Draw active strokes from ref
+        currentItemsRef.current.forEach(item => drawItem(ctx, item));
+
+        ctx.restore();
+    }, [getCanvasContext, transform, drawItem]);
 
     // Force background cache update when its dependencies change
     useEffect(() => {
@@ -903,14 +930,17 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             setEditingText({ item: newTextItem, isNew: true });
         } else if (selectedTool === 'pen' || selectedTool === 'highlighter') {
             setIsDrawing(true);
+            const newItem = {
+                id: generateId(), type: 'path', x, y, points: [{ x, y }],
+                strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
+                isHighlighter: selectedTool === 'highlighter',
+                zIndex: 0, visible: true
+            } as PathItem;
+            // Set both state and ref so RAF drawing can begin immediately
+            currentItemsRef.current.set(e.pointerId, newItem);
             setCurrentItems(prev => {
                 const newMap = new Map(prev);
-                newMap.set(e.pointerId, {
-                    id: generateId(), type: 'path', x, y, points: [{ x, y }],
-                    strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
-                    isHighlighter: selectedTool === 'highlighter',
-                    zIndex: 0, visible: true
-                } as PathItem);
+                newMap.set(e.pointerId, newItem);
                 return newMap;
             });
         } else if (['rectangle', 'circle', 'triangle', 'pentagon'].includes(selectedTool)) {
@@ -1192,11 +1222,15 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                     }
 
                     if (newPoints.length > 0) {
-                        setCurrentItems(prev => {
-                            const newMap = new Map(prev);
-                            newMap.set(e.pointerId, { ...currentItem, points: [...(currentItem as PathItem).points, ...newPoints] } as PathItem);
-                            return newMap;
-                        });
+                        // Update ref directly (no React state update = no re-render = fast)
+                        const updatedItem = { ...currentItem, points: [...(currentItem as PathItem).points, ...newPoints] } as PathItem;
+                        currentItemsRef.current.set(e.pointerId, updatedItem);
+
+                        // Schedule a single RAF draw if not already scheduled
+                        if (!needsDrawRef.current) {
+                            needsDrawRef.current = true;
+                            requestAnimationFrame(() => drawActiveFrame());
+                        }
                     }
                 }
             } else if (currentItem.type === 'shape') {
@@ -1344,8 +1378,13 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             setErasedDuringDraw(new Set());
         }
 
-        if (currentItems.has(e.pointerId)) {
-            const finishedItem = currentItems.get(e.pointerId)!;
+        // Use ref data (latest points) if available, otherwise fall back to state
+        const refItem = currentItemsRef.current.get(e.pointerId);
+        const stateItem = currentItems.get(e.pointerId);
+        const finishedItemSource = refItem || stateItem;
+
+        if (finishedItemSource) {
+            const finishedItem = finishedItemSource;
             const isQuickClick = finishedItem.type === 'path' && finishedItem.points.length < 3;
             
             setItems(prevItems => {
@@ -1381,6 +1420,8 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                 return newItems;
             });
             
+            // Clean up both ref and state
+            currentItemsRef.current.delete(e.pointerId);
             setCurrentItems(prev => {
                 const newMap = new Map(prev);
                 newMap.delete(e.pointerId);
