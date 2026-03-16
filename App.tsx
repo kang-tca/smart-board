@@ -9,6 +9,7 @@ import { Toolbar } from './components/Toolbar';
 import { PresentationToolbar } from './components/PresentationToolbar';
 import { FileUploadButton } from './components/FileUploadButton';
 import { CanvasItem, Tool, ToolOptions, Transform, SaveMetadata, ImageItem, TagItem, StickerItem, TextItem, YoutubeItem } from './types';
+import { FloatingToolbar } from './components/FloatingToolbar';
 import { Icon } from './components/Icon';
 import { saveData, loadData, deleteData } from './lib/db';
 import { supabase } from './lib/supabase'; // Import Supabase Client
@@ -1619,6 +1620,22 @@ const App: React.FC = () => {
                     onYoutubePlay={setPlayingYoutubeId}
                     isMultiTouchEnabled={isMultiTouchEnabled}
                 />
+
+                {/* Floating Quick Access Toolbars */}
+                {!presentationState.item && (currentUser || isGuest) ? (
+                    <>
+                        <FloatingToolbar
+                            position="left"
+                            selectedTool={selectedTool}
+                            setSelectedTool={handleToolSelect}
+                        />
+                        <FloatingToolbar
+                            position="right"
+                            selectedTool={selectedTool}
+                            setSelectedTool={handleToolSelect}
+                        />
+                    </>
+                ) : null}
             </div>
 
             {/* Save Modal */}
