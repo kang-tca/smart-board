@@ -9,7 +9,7 @@ interface FloatingToolbarProps {
 }
 
 const quickTools: { name: Tool, icon: string, label: string }[] = [
-    { name: 'select', icon: 'cursor', label: 'Select (V)' },
+    { name: 'select', icon: 'select', label: 'Select (V)' },
     { name: 'hand', icon: 'hand', label: 'Hand (H)' },
     { name: 'pen', icon: 'pen', label: 'Pen (P)' },
     { name: 'highlighter', icon: 'highlighter', label: 'Highlighter (H)' },
