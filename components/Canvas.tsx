@@ -1149,8 +1149,8 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             }
         } else if (draggedState) {
             setDraggedState(prev => prev ? { ...prev, currentMousePos: { x, y } } : null);
-        } else if (currentItems.has(e.pointerId)) {
-            const currentItem = currentItems.get(e.pointerId)!;
+        } else if (currentItemsRef.current.has(e.pointerId) || currentItems.has(e.pointerId)) {
+            const currentItem = currentItemsRef.current.get(e.pointerId) || currentItems.get(e.pointerId)!;
             const isShiftPressed = 'shiftKey' in e && e.shiftKey;
             const isAltPressed = 'altKey' in e && e.altKey;
 
