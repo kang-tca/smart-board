@@ -182,8 +182,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
     const [isDrawing, setIsDrawing] = useState(false); // Drawing, dragging, or panning
     const [currentItems, setCurrentItems] = useState<Map<number, CanvasItem>>(new Map());
     const currentItemsRef = useRef<Map<number, CanvasItem>>(new Map());
-    const drawingRAFRef = useRef<number | null>(null);
-    const needsDrawRef = useRef(false);
+    const isDrawingRef = useRef(false);
 
     const [draggedState, setDraggedState] = useState<{
         startMousePos: { x: number; y: number };
@@ -589,7 +588,8 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             }
         });
 
-        // Draw active strokes from ref (source of truth for live pen data) and state items\n        currentItemsRef.current.forEach(item => drawItem(ctx, item));\n        currentItems.forEach((item, pointerId) => {\n            // Only draw from state if not already in ref (ref has latest data)\n            if (!currentItemsRef.current.has(pointerId)) {\n                drawItem(ctx, item);\n            }\n        });
+        // Draw active strokes from ref (avoids stale closure on currentItems)
+        currentItemsRef.current.forEach(item => drawItem(ctx, item));
 
         if (eraserPath) {
             ctx.strokeStyle = '#888888';
@@ -636,35 +636,14 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
         }
 
         ctx.restore();
-    }, [items, currentItems, getCanvasContext, drawItem, transform, selectedItemIds, draggedState, resizingItem, erasedDuringDraw, marquee, eraserPath]);
-
-    // RAF-based drawing loop for active pen strokes
-    const drawActiveFrame = useCallback(() => {
-        if (!needsDrawRef.current) return;
-        needsDrawRef.current = false;
-
-        const ctx = getCanvasContext();
-        const canvas = canvasRef.current;
-        const bgCanvas = backgroundCanvasCache.current;
-        if (!ctx || !canvas) return;
-
-        // Fast path: blit cached background + draw only the active stroke
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(bgCanvas, 0, 0);
-
-        ctx.save();
-        ctx.translate(transform.x, transform.y);
-        ctx.scale(transform.scale, transform.scale);
-
-        // Draw active strokes from ref
-        currentItemsRef.current.forEach(item => drawItem(ctx, item));
-
-        ctx.restore();
-    }, [getCanvasContext, transform, drawItem]);
+    }, [items, getCanvasContext, drawItem, transform, selectedItemIds, draggedState, resizingItem, erasedDuringDraw, marquee, eraserPath]);
 
     // Force background cache update when its dependencies change
+    // Skip during active drawing to prevent expensive rebuilds that cause stuttering
     useEffect(() => {
-        updateBackgroundCache();
+        if (!isDrawingRef.current) {
+            updateBackgroundCache();
+        }
     }, [updateBackgroundCache, imagesLoaded]);
 
     useEffect(() => {
@@ -688,6 +667,12 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
     useEffect(() => {
         drawAll();
     }, [imagesLoaded, drawAll]);
+
+    // Sync ref and trigger redraw whenever currentItems state changes
+    useEffect(() => {
+        currentItemsRef.current = currentItems;
+        drawAll();
+    }, [currentItems, drawAll]);
 
     useEffect(() => {
         const svgString = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" /></svg>`;
@@ -930,19 +915,21 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             setEditingText({ item: newTextItem, isNew: true });
         } else if (selectedTool === 'pen' || selectedTool === 'highlighter') {
             setIsDrawing(true);
+            isDrawingRef.current = true;
             const newItem = {
                 id: generateId(), type: 'path', x, y, points: [{ x, y }],
                 strokeColor: toolOptions.strokeColor, strokeWidth: toolOptions.strokeWidth,
                 isHighlighter: selectedTool === 'highlighter',
                 zIndex: 0, visible: true
             } as PathItem;
-            // Set both state and ref so RAF drawing can begin immediately
             currentItemsRef.current.set(e.pointerId, newItem);
             setCurrentItems(prev => {
                 const newMap = new Map(prev);
                 newMap.set(e.pointerId, newItem);
                 return newMap;
             });
+            // Immediately draw the first point
+            drawAll();
         } else if (['rectangle', 'circle', 'triangle', 'pentagon'].includes(selectedTool)) {
             setIsDrawing(true);
             setCurrentItems(prev => {
@@ -1149,7 +1136,7 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             }
         } else if (draggedState) {
             setDraggedState(prev => prev ? { ...prev, currentMousePos: { x, y } } : null);
-        } else if (currentItemsRef.current.has(e.pointerId) || currentItems.has(e.pointerId)) {
+        } else if (currentItems.has(e.pointerId) || currentItemsRef.current.has(e.pointerId)) {
             const currentItem = currentItemsRef.current.get(e.pointerId) || currentItems.get(e.pointerId)!;
             const isShiftPressed = 'shiftKey' in e && e.shiftKey;
             const isAltPressed = 'altKey' in e && e.altKey;
@@ -1222,15 +1209,13 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                     }
 
                     if (newPoints.length > 0) {
-                        // Update ref directly (no React state update = no re-render = fast)
                         const updatedItem = { ...currentItem, points: [...(currentItem as PathItem).points, ...newPoints] } as PathItem;
                         currentItemsRef.current.set(e.pointerId, updatedItem);
-
-                        // Schedule a single RAF draw if not already scheduled
-                        if (!needsDrawRef.current) {
-                            needsDrawRef.current = true;
-                            requestAnimationFrame(() => drawActiveFrame());
-                        }
+                        setCurrentItems(prev => {
+                            const newMap = new Map(prev);
+                            newMap.set(e.pointerId, updatedItem);
+                            return newMap;
+                        });
                     }
                 }
             } else if (currentItem.type === 'shape') {
@@ -1378,13 +1363,8 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
             setErasedDuringDraw(new Set());
         }
 
-        // Use ref data (latest points) if available, otherwise fall back to state
-        const refItem = currentItemsRef.current.get(e.pointerId);
-        const stateItem = currentItems.get(e.pointerId);
-        const finishedItemSource = refItem || stateItem;
-
-        if (finishedItemSource) {
-            const finishedItem = finishedItemSource;
+        if (currentItems.has(e.pointerId)) {
+            const finishedItem = currentItemsRef.current.get(e.pointerId) || currentItems.get(e.pointerId)!;
             const isQuickClick = finishedItem.type === 'path' && finishedItem.points.length < 3;
             
             setItems(prevItems => {
@@ -1409,24 +1389,26 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                         const p1 = pathItem.points[0];
                         const p2 = pathItem.points[pathItem.points.length - 1];
                         const dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-                        if (dist < 2) { // Threshold for a "dot"
-                            pathItem = { ...pathItem, points: [p1, { x: p1.x + 0.1, y: p1.y + 0.1 }] }; // Create a minimal dot
+                        if (dist < 2) {
+                            pathItem = { ...pathItem, points: [p1, { x: p1.x + 0.1, y: p1.y + 0.1 }] };
                         }
                     }
                     newItem = pathItem;
                 }
 
-                const newItems = [...prevItems, newItem];
-                return newItems;
+                return [...prevItems, newItem];
             });
             
-            // Clean up both ref and state
+            // Clean up ref and state, then rebuild background cache
             currentItemsRef.current.delete(e.pointerId);
             setCurrentItems(prev => {
                 const newMap = new Map(prev);
                 newMap.delete(e.pointerId);
                 return newMap;
             });
+            isDrawingRef.current = false;
+            // Rebuild background cache now that the stroke is finalized into items
+            updateBackgroundCache();
         }
 
         setIsDrawing(currentItems.size > 1); // Only fully stop drawing if this was the last active pointer
