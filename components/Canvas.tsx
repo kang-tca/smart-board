@@ -1209,13 +1209,12 @@ export const Canvas: React.FC<CanvasProps> = ({ items, setItems, selectedTool, t
                     }
 
                     if (newPoints.length > 0) {
-                        const updatedItem = { ...currentItem, points: [...(currentItem as PathItem).points, ...newPoints] } as PathItem;
-                        currentItemsRef.current.set(e.pointerId, updatedItem);
-                        setCurrentItems(prev => {
-                            const newMap = new Map(prev);
-                            newMap.set(e.pointerId, updatedItem);
-                            return newMap;
-                        });
+                        // Mutate points in-place (O(1)) instead of spreading entire array (O(n))
+                        // This eliminates O(n²) total allocations that cause GC pauses during long strokes
+                        const liveItem = currentItemsRef.current.get(e.pointerId) as PathItem;
+                        liveItem.points.push(...newPoints);
+                        // Trigger React re-render with minimal allocation (just a new Map shell)
+                        setCurrentItems(prev => new Map(prev));
                     }
                 }
             } else if (currentItem.type === 'shape') {
