@@ -20,7 +20,7 @@ export const StudentClient: React.FC = () => {
         if (joined && sessionId && name) {
             const registerParticipant = async () => {
                 try {
-                    const { data, error } = await supabase.from('participants').insert({
+                    const { data, error } = await supabase.from('smartboard_participants').insert({
                         session_id: sessionId,
                         name: name,
                         joined_at: Date.now()
@@ -38,7 +38,7 @@ export const StudentClient: React.FC = () => {
                     // Supabase delete() does not return a full Promise with .catch, so we await it in a wrapper.
                     const removeParticipant = async () => {
                         try {
-                            await supabase.from('participants').delete().eq('id', participantIdStr);
+                            await supabase.from('smartboard_participants').delete().eq('id', participantIdStr);
                             console.log('Participant removed');
                         } catch (err) {
                             console.error("Failed to remove participant", err);
@@ -58,7 +58,7 @@ export const StudentClient: React.FC = () => {
         }
 
         try {
-            const { data, error } = await supabase.from('sessions')
+            const { data, error } = await supabase.from('smartboard_sessions')
                 .select('id')
                 .eq('code', code)
                 .eq('active', true)
@@ -123,7 +123,7 @@ export const StudentClient: React.FC = () => {
         setIsSending(true);
         setMessage(null);
         try {
-            await supabase.from('submissions').insert({
+            await supabase.from('smartboard_submissions').insert({
                 session_id: sessionId,
                 type: payload.type,
                 content: payload.content,

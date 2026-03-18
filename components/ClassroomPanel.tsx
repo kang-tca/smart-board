@@ -46,7 +46,7 @@ export const ClassroomPanel: React.FC<ClassroomPanelProps> = ({ onClose, onDropI
         setIsLoading(true);
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         try {
-            const { data, error } = await supabase.from('sessions').insert({
+            const { data, error } = await supabase.from('smartboard_sessions').insert({
                 host_id: currentUserId,
                 code,
                 active: true,
@@ -59,8 +59,8 @@ export const ClassroomPanel: React.FC<ClassroomPanelProps> = ({ onClose, onDropI
             setSessionCode(code);
 
             // Listen for submissions
-            const subChannel = supabase.channel(`public:submissions:session_id=eq.${newSessionId}`)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'submissions', filter: `session_id=eq.${newSessionId}` }, payload => {
+            const subChannel = supabase.channel(`public:smartboard_submissions:session_id=eq.${newSessionId}`)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'smartboard_submissions', filter: `session_id=eq.${newSessionId}` }, payload => {
                     setSubmissions(prev => [{
                         id: payload.new.id.toString(),
                         type: payload.new.type,
@@ -71,8 +71,8 @@ export const ClassroomPanel: React.FC<ClassroomPanelProps> = ({ onClose, onDropI
                 }).subscribe();
 
             // Listen for participants
-            const partChannel = supabase.channel(`public:participants:session_id=eq.${newSessionId}`)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants', filter: `session_id=eq.${newSessionId}` }, payload => {
+            const partChannel = supabase.channel(`public:smartboard_participants:session_id=eq.${newSessionId}`)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'smartboard_participants', filter: `session_id=eq.${newSessionId}` }, payload => {
                     setParticipants(prev => [{
                         id: payload.new.id.toString(),
                         name: payload.new.name,
@@ -93,7 +93,7 @@ export const ClassroomPanel: React.FC<ClassroomPanelProps> = ({ onClose, onDropI
     const stopSession = async () => {
         if (!sessionId) return;
         if (window.confirm("Are you sure you want to stop the session? Students will be disconnected.")) {
-            await supabase.from('sessions').update({ active: false }).eq('id', sessionId);
+            await supabase.from('smartboard_sessions').update({ active: false }).eq('id', sessionId);
             setSessionId(null);
             setSessionCode(null);
             setSubmissions([]);
