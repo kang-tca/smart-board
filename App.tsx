@@ -203,41 +203,12 @@ const App: React.FC = () => {
     }>({ item: null, preTransform: null, fitHeightTransform: null, fitWidthTransform: null, zoomMode: null });
     const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoginMode, setIsLoginMode] = useState(true);
     const [isGuest, setIsGuest] = useState(false);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [tempTitle, setTempTitle] = useState('');
 
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (isLoginLoading) return;
-        setStatusMessage(null);
-
-        try {
-            if (isLoginMode) {
-                const { error } = await signIn(email, password);
-                if (error) throw error;
-                setStatusMessage({ text: 'Logged in successfully!', type: 'success' });
-            } else {
-                const { error } = await signUp(email, password);
-                if (error) throw error;
-                setStatusMessage({ text: 'Sign up successful! You can now log in.', type: 'success' });
-                setIsLoginMode(true);
-            }
-        } catch (error: any) {
-            console.error("Auth failed", error);
-            setStatusMessage({ text: `Authentication failed: ${error.message}`, type: 'error' });
-        }
-    };
-
     const handleLogout = async () => {
         if (window.confirm(t('modals.prompts.logout'))) {
-            if (isGuest) {
-                setIsGuest(false);
-                return;
-            }
             const { error } = await signOut();
             if (error) {
                 setStatusMessage({ text: `Logout failed: ${error.message}`, type: 'error' });
@@ -1202,73 +1173,18 @@ const App: React.FC = () => {
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('auth.title')}</h1>
                     <p className="text-gray-600 mb-8">
-                        {t('auth.subtitle')} {t('auth.with')}
+                        Smart Board를 사용하려면<br />tcreator.kr에 로그인해 주세요.
                     </p>
-                    {statusMessage && statusMessage.type === 'error' && (
-                        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-left text-sm text-red-700">
-                            <p className="font-semibold mb-1">로그인 오류:</p>
-                            <p>{statusMessage.text}</p>
-                            {statusMessage.text.includes('도메인') && (
-                                <button
-                                    onClick={() => navigator.clipboard.writeText(window.location.hostname)}
-                                    className="mt-2 text-xs bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded border border-red-300 transition-colors"
-                                >
-                                    도메인 복사
-                                </button>
-                            )}
-                        </div>
-                    )}
 
-                    <form onSubmit={handleAuth} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 text-left mb-1">{t('auth.email')}</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                placeholder="you@example.com"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 text-left mb-1">{t('auth.password')}</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                placeholder="••••••••"
-                                required
-                                minLength={6}
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoginLoading}
-                            className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed"
-                        >
-                            {isLoginLoading ? (
-                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            ) : null}
-                            <span className="font-semibold text-lg">{isLoginMode ? t('auth.signIn') : t('auth.signUp')}</span>
-                        </button>
-                    </form>
-
-                    <div className="mt-6 text-sm text-gray-600">
-                        {isLoginMode ? t('auth.noAccount') + " " : t('auth.hasAccount') + " "}
-                        <button
-                            type="button"
-                            onClick={() => setIsLoginMode(!isLoginMode)}
-                            className="text-blue-600 font-semibold hover:underline bg-transparent border-none p-0 cursor-pointer inline"
-                        >
-                            {isLoginMode ? t('auth.signUp') : t('auth.signIn')}
-                        </button>
-                    </div>
+                    <a
+                        href="https://tcreator.kr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-200 font-semibold text-lg no-underline"
+                    >
+                        <span>tcreator.kr로 이동</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                    </a>
 
                     <div className="mt-4 text-center">
                         <span className="text-gray-500 text-sm mr-2">{t('auth.guestPrompt')}</span>
