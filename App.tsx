@@ -498,7 +498,7 @@ const App: React.FC = () => {
             // 2. Cloud Sync (Firestore)
             const fileId = currentFileIdRef.current;
             const fileName = saveNameRef.current;
-            const userId = currentUser.uid;
+            const userId = currentUser.id;
 
             if (fileId && fileName) {
                 try {
@@ -1397,10 +1397,6 @@ const App: React.FC = () => {
                                 <button onClick={() => setIsChecklistVisible(prev => !prev)} title={t('toolbar.checklist')} className="flex items-center space-x-2 px-3 py-2 text-sm bg-white text-gray-700 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 transition-colors">
                                     <Icon name="checklist" className="w-5 h-5" />
                                 </button>
-                                {/* Auto-save status attached to checklist/widgets area */}
-                                <div className="absolute right-0 top-full mt-1 mr-1 text-xs text-gray-500 transition-opacity duration-500 whitespace-nowrap pointer-events-none" style={{ opacity: autoSaveOpacity }}>
-                                    {autoSaveMessage.current}
-                                </div>
                             </div>
 
                             <button onClick={() => setIsClassroomPanelOpen(prev => !prev)} title={t('toolbar.classroom')} className={`p-2 rounded-lg shadow-md transition-colors ${isClassroomPanelOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}>
@@ -1424,9 +1420,19 @@ const App: React.FC = () => {
 
                             <div className="w-px h-6 bg-gray-300"></div>
 
+                            <div className="relative flex items-center">
                             <button onClick={handleOpenSaveModal} disabled={!!isProcessingCloud} className="p-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed transition-colors" title={t('toolbar.save')}>
-                                <Icon name="cloud-upload" />
+                                {isProcessingCloud ? (
+                                    <svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                ) : (
+                                    <Icon name="cloud-upload" />
+                                )}
                             </button>
+                            {/* Auto-save status message */}
+                            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-xs text-gray-500 transition-opacity duration-500 whitespace-nowrap pointer-events-none" style={{ opacity: autoSaveOpacity }}>
+                                {autoSaveMessage.current}
+                            </div>
+                            </div>
                             <button onClick={handleOpenLoadModal} disabled={!!isProcessingCloud} className="p-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors" title={t('toolbar.load')}>
                                 <Icon name="cloud-download" />
                             </button>
